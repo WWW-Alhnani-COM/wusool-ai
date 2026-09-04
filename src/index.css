@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  body {
+    @apply bg-base text-ink font-body antialiased;
+  }
+  ::selection {
+    @apply bg-brass/30 text-ink;
+  }
+  /* Visible, deliberate keyboard focus — never remove outline without replacing it. */
+  :focus-visible {
+    outline: 2px solid theme("colors.brass.DEFAULT");
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+@layer utilities {
+  .section-px {
+    @apply px-6 sm:px-10 lg:px-16;
+  }
+  .container-page {
+    @apply mx-auto w-full max-w-6xl;
+  }
+}

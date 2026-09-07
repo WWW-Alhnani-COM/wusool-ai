@@ -25,7 +25,7 @@ export function Header() {
     >
       <div className="container-page section-px flex items-center justify-between h-16 sm:h-20">
         <NavLink to="/" className="font-display text-lg sm:text-xl text-ink" onClick={closeMenu}>
-          وصول <span className="text-brass">AI</span>
+          جذع <span className="text-brass">AI</span>
         </NavLink>
 
         <nav className="hidden lg:flex items-center gap-8">

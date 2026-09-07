@@ -52,11 +52,11 @@ export const finalCtaContent = {
   question: "وش تبغى توصل له؟",
   statement: "خلّنا نبني الطريق.",
   ctaPrimary: "ابدأ رحلة الوصول",
-  ctaSecondary: "ابدأ مع وصول AI",
+  ctaSecondary: "ابدأ مع جذع AI",
 };
 
 export const aboutContent = {
-  whoWeAre: "وصول AI شركة تبني حلول ذكاء اصطناعي وأتمتة مخصصة للشركات.",
+  whoWeAre: "جذع AI شركة تبني حلول ذكاء اصطناعي وأتمتة مخصصة للشركات.",
   whatWeDo: "نحوّل العمليات والتواصل والمتابعة إلى أنظمة ذكية.",
   howWeWork: "نفهم → نصمم → نبني → نربط → نطلق → نتابع.",
 };
@@ -66,6 +66,6 @@ export const siteNav = [
   { label: "الحلول", to: "/الحلول" },
   { label: "القطاعات", to: "/القطاعات" },
   { label: "كيف نعمل", to: "/كيف-نعمل" },
-  { label: "عن وصول", to: "/عن-وصول" },
+  { label: "عن جذع", to: "/عن-وصول" },
   { label: "تواصل معنا", to: "/تواصل" },
 ];

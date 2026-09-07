@@ -1,4 +1,4 @@
-# وصول AI | WUSOOL AI — الموقع الرسمي
+# جذع AI | WUSOOL AI — الموقع الرسمي
 
 React + TypeScript + Vite + Tailwind CSS + Framer Motion. لا يوجد Next.js.
 

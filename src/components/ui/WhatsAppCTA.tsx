@@ -1,7 +1,7 @@
 import { getWhatsAppLink } from "@/lib/whatsapp";
 
 export function WhatsAppCTA() {
-  const link = getWhatsAppLink("مرحبًا، أبغى أستفسر عن حلول وصول AI.");
+  const link = getWhatsAppLink("مرحبًا، أبغى أستفسر عن حلول جذع AI.");
 
   if (!link) {
     return (

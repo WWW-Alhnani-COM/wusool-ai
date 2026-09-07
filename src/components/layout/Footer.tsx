@@ -9,7 +9,7 @@ export function Footer() {
       <div className="container-page section-px py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         <div className="flex flex-col gap-4 lg:col-span-1">
           <span className="font-display text-lg text-ink">
-            وصول <span className="text-brass">AI</span>
+            جذع <span className="text-brass">AI</span>
           </span>
           <p className="text-ink-muted text-sm leading-relaxed max-w-xs">
             شركة تقنية سعودية تبني حلول ذكاء اصطناعي وأتمتة أعمال مخصصة للشركات.
@@ -31,7 +31,7 @@ export function Footer() {
 
       <div className="border-t border-base-line">
         <div className="container-page section-px py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-faint">
-          <span>© {new Date().getFullYear()} وصول AI. جميع الحقوق محفوظة.</span>
+          <span>© {new Date().getFullYear()} جذع AI. جميع الحقوق محفوظة.</span>
           <div className="flex items-center gap-6">
             <Link to="/سياسة-الخصوصية" className="hover:text-ink-muted">
               سياسة الخصوصية

@@ -1,12 +1,18 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 
-import { heroContent } from "@/data/content";
+import {
+  heroContent,
+  heroStages,
+  type HeroStage,
+} from "@/data/content";
+
 import { sequenceFrames } from "@/data/process";
 import { Button } from "@/components/ui/Button";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -14,11 +20,35 @@ import { useIsLowPowerDevice } from "@/hooks/useIsLowPowerDevice";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 
 // ============================================================
-// HERO SCROLL CONFIGURATION
+// CONFIGURATION
 // ============================================================
 
 const HERO_SCROLL_LENGTH_VH = 500;
 const HERO_SCROLL_LENGTH_VH_LIGHT = 320;
+
+const TEXT_EXIT_DURATION = 0.28;
+const TEXT_ENTER_DURATION = 0.55;
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getStageForFrame(
+  frame: number,
+  stages: HeroStage[],
+): HeroStage {
+  return (
+    stages.find(
+      (stage) =>
+        frame >= stage.startFrame &&
+        frame <= stage.endFrame,
+    ) ?? stages[0]
+  );
+}
 
 // ============================================================
 // HERO
@@ -40,8 +70,14 @@ export function Hero() {
   const imagesRef =
     useRef<HTMLImageElement[]>([]);
 
+  const contextRef =
+    useRef<CanvasRenderingContext2D | null>(null);
+
   const animationFrameRef =
     useRef<number | null>(null);
+
+  const resizeObserverRef =
+    useRef<ResizeObserver | null>(null);
 
   const lastFrameRef =
     useRef(-1);
@@ -50,7 +86,35 @@ export function Hero() {
     useState(false);
 
   // ==========================================================
-  // PRELOAD + DECODE ALL FRAMES
+  // FRAME CALCULATION
+  // ==========================================================
+
+  const safeProgress = clamp(progress, 0, 1);
+
+  const activeIndex =
+    frameCount > 0
+      ? Math.min(
+          frameCount - 1,
+          Math.round(
+            safeProgress * (frameCount - 1),
+          ),
+        )
+      : 0;
+
+  const activeFrame =
+    activeIndex + 1;
+
+  const activeStage = useMemo(
+    () =>
+      getStageForFrame(
+        activeFrame,
+        heroStages,
+      ),
+    [activeFrame],
+  );
+
+  // ==========================================================
+  // PRELOAD ALL IMAGES
   // ==========================================================
 
   useEffect(() => {
@@ -61,36 +125,50 @@ export function Hero() {
     let cancelled = false;
 
     const preloadImages = async () => {
-      const loadedImages: HTMLImageElement[] = [];
+      const results =
+        await Promise.all(
+          frames.map(async (frame) => {
+            const image =
+              new Image();
 
-      for (const frame of frames) {
-        if (cancelled) {
-          return;
-        }
+            image.decoding = "async";
+            image.loading = "eager";
+            image.src = frame.src;
 
-        const image = new Image();
+            try {
+              await image.decode();
+            } catch {
+              await new Promise<void>(
+                (resolve) => {
+                  if (
+                    image.complete
+                  ) {
+                    resolve();
+                    return;
+                  }
 
-        image.decoding = "async";
-        image.loading = "eager";
-        image.src = frame.src;
+                  image.onload = () =>
+                    resolve();
 
-        try {
-          await image.decode();
-        } catch {
-          await new Promise<void>((resolve) => {
-            image.onload = () => resolve();
-            image.onerror = () => resolve();
-          });
-        }
+                  image.onerror = () =>
+                    resolve();
+                },
+              );
+            }
 
-        loadedImages.push(image);
-      }
+            return image;
+          }),
+        );
 
-      if (cancelled) {
+      if (
+        cancelled
+      ) {
         return;
       }
 
-      imagesRef.current = loadedImages;
+      imagesRef.current =
+        results;
+
       setPreloaded(true);
     };
 
@@ -107,28 +185,37 @@ export function Hero() {
   // ==========================================================
 
   const resizeCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
+    const canvas =
+      canvasRef.current;
 
     if (!canvas) {
       return;
     }
 
-    const rect = canvas.getBoundingClientRect();
+    const rect =
+      canvas.getBoundingClientRect();
 
-    const dpr = Math.min(
-      window.devicePixelRatio || 1,
-      lowPower ? 1.5 : 2,
-    );
+    const dpr =
+      Math.min(
+        window.devicePixelRatio || 1,
+        lowPower ? 1.5 : 2,
+      );
 
-    const width = Math.max(
-      1,
-      Math.round(rect.width * dpr),
-    );
+    const width =
+      Math.max(
+        1,
+        Math.round(
+          rect.width * dpr,
+        ),
+      );
 
-    const height = Math.max(
-      1,
-      Math.round(rect.height * dpr),
-    );
+    const height =
+      Math.max(
+        1,
+        Math.round(
+          rect.height * dpr,
+        ),
+      );
 
     if (
       canvas.width !== width ||
@@ -137,72 +224,11 @@ export function Hero() {
       canvas.width = width;
       canvas.height = height;
     }
-  }, [lowPower]);
 
-  // ==========================================================
-  // DRAW FRAME
-  // ==========================================================
+    const context =
+      contextRef.current;
 
-  const drawFrame = useCallback(
-    (frameIndex: number) => {
-      const canvas = canvasRef.current;
-      const image =
-        imagesRef.current[frameIndex];
-
-      if (!canvas || !image) {
-        return;
-      }
-
-      resizeCanvas();
-
-      const context =
-        canvas.getContext("2d", {
-          alpha: false,
-          desynchronized: true,
-        });
-
-      if (!context) {
-        return;
-      }
-
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-
-      const imageWidth = image.naturalWidth;
-      const imageHeight = image.naturalHeight;
-
-      if (
-        !imageWidth ||
-        !imageHeight
-      ) {
-        return;
-      }
-
-      // ======================================================
-      // COVER CALCULATION
-      // ======================================================
-
-      const scale = Math.max(
-        canvasWidth / imageWidth,
-        canvasHeight / imageHeight,
-      );
-
-      const drawWidth =
-        imageWidth * scale;
-
-      const drawHeight =
-        imageHeight * scale;
-
-      const offsetX =
-        (canvasWidth - drawWidth) / 2;
-
-      const offsetY =
-        (canvasHeight - drawHeight) / 2;
-
-      // ======================================================
-      // DRAW
-      // ======================================================
-
+    if (context) {
       context.setTransform(
         1,
         0,
@@ -211,33 +237,193 @@ export function Hero() {
         0,
         0,
       );
-
-      // Never expose transparent/black canvas
-      // between frames.
-      context.fillStyle = "#000";
-      context.fillRect(
-        0,
-        0,
-        canvasWidth,
-        canvasHeight,
-      );
-
-      context.drawImage(
-        image,
-        offsetX,
-        offsetY,
-        drawWidth,
-        drawHeight,
-      );
-
-      lastFrameRef.current =
-        frameIndex;
-    },
-    [resizeCanvas],
-  );
+    }
+  }, [lowPower]);
 
   // ==========================================================
-  // DRAW CURRENT FRAME
+  // DRAW FRAME
+  // ==========================================================
+
+  const drawFrame =
+    useCallback(
+      (frameIndex: number) => {
+        const canvas =
+          canvasRef.current;
+
+        const image =
+          imagesRef.current[
+            frameIndex
+          ];
+
+        if (
+          !canvas ||
+          !image ||
+          !image.complete ||
+          !image.naturalWidth ||
+          !image.naturalHeight
+        ) {
+          return;
+        }
+
+        resizeCanvas();
+
+        let context =
+          contextRef.current;
+
+        if (!context) {
+          context =
+            canvas.getContext(
+              "2d",
+              {
+                alpha: false,
+                desynchronized: true,
+              },
+            );
+
+          if (!context) {
+            return;
+          }
+
+          contextRef.current =
+            context;
+        }
+
+        const canvasWidth =
+          canvas.width;
+
+        const canvasHeight =
+          canvas.height;
+
+        const imageWidth =
+          image.naturalWidth;
+
+        const imageHeight =
+          image.naturalHeight;
+
+        const scale =
+          Math.max(
+            canvasWidth /
+              imageWidth,
+            canvasHeight /
+              imageHeight,
+          );
+
+        const drawWidth =
+          imageWidth * scale;
+
+        const drawHeight =
+          imageHeight * scale;
+
+        const offsetX =
+          (canvasWidth -
+            drawWidth) /
+          2;
+
+        const offsetY =
+          (canvasHeight -
+            drawHeight) /
+          2;
+
+        context.setTransform(
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+        );
+
+        /*
+         * Important:
+         *
+         * We intentionally do not clear the canvas
+         * before drawing a new frame.
+         *
+         * The previous frame remains visible until
+         * the next valid frame is ready.
+         *
+         * This prevents black flashes.
+         */
+
+        context.drawImage(
+          image,
+          offsetX,
+          offsetY,
+          drawWidth,
+          drawHeight,
+        );
+
+        lastFrameRef.current =
+          frameIndex;
+      },
+      [resizeCanvas],
+    );
+
+  // ==========================================================
+  // INITIAL CANVAS + RESIZE OBSERVER
+  // ==========================================================
+
+  useEffect(() => {
+    if (!preloaded) {
+      return;
+    }
+
+    resizeCanvas();
+
+    drawFrame(
+      clamp(
+        activeIndex,
+        0,
+        frameCount - 1,
+      ),
+    );
+
+    const canvas =
+      canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const resizeObserver =
+      new ResizeObserver(() => {
+        resizeCanvas();
+
+        const currentFrame =
+          lastFrameRef.current;
+
+        if (
+          currentFrame >= 0
+        ) {
+          drawFrame(
+            currentFrame,
+          );
+        }
+      });
+
+    resizeObserver.observe(
+      canvas,
+    );
+
+    resizeObserverRef.current =
+      resizeObserver;
+
+    return () => {
+      resizeObserver.disconnect();
+
+      resizeObserverRef.current =
+        null;
+    };
+  }, [
+    preloaded,
+    resizeCanvas,
+    drawFrame,
+    activeIndex,
+    frameCount,
+  ]);
+
+  // ==========================================================
+  // FRAME SCRUBBING
   // ==========================================================
 
   useEffect(() => {
@@ -248,28 +434,16 @@ export function Hero() {
       return;
     }
 
-    const safeProgress = Math.max(
-      0,
-      Math.min(1, progress),
-    );
-
-    const frameIndex = Math.min(
-      frameCount - 1,
-      Math.round(
-        safeProgress *
-          (frameCount - 1),
-      ),
-    );
-
     if (
-      frameIndex ===
+      activeIndex ===
       lastFrameRef.current
     ) {
       return;
     }
 
     if (
-      animationFrameRef.current !== null
+      animationFrameRef.current !==
+      null
     ) {
       cancelAnimationFrame(
         animationFrameRef.current,
@@ -278,7 +452,9 @@ export function Hero() {
 
     animationFrameRef.current =
       requestAnimationFrame(() => {
-        drawFrame(frameIndex);
+        drawFrame(
+          activeIndex,
+        );
 
         animationFrameRef.current =
           null;
@@ -286,7 +462,8 @@ export function Hero() {
 
     return () => {
       if (
-        animationFrameRef.current !== null
+        animationFrameRef.current !==
+        null
       ) {
         cancelAnimationFrame(
           animationFrameRef.current,
@@ -297,74 +474,11 @@ export function Hero() {
       }
     };
   }, [
-    progress,
+    activeIndex,
     preloaded,
     frameCount,
     drawFrame,
   ]);
-
-  // ==========================================================
-  // INITIAL CANVAS FRAME
-  // ==========================================================
-
-  useEffect(() => {
-    if (!preloaded) {
-      return;
-    }
-
-    resizeCanvas();
-
-    drawFrame(0);
-
-    const handleResize = () => {
-      resizeCanvas();
-
-      if (
-        lastFrameRef.current >= 0
-      ) {
-        drawFrame(
-          lastFrameRef.current,
-        );
-      }
-    };
-
-    window.addEventListener(
-      "resize",
-      handleResize,
-      { passive: true },
-    );
-
-    return () => {
-      window.removeEventListener(
-        "resize",
-        handleResize,
-      );
-    };
-  }, [
-    preloaded,
-    resizeCanvas,
-    drawFrame,
-  ]);
-
-  // ==========================================================
-  // ACTIVE FRAME
-  // ==========================================================
-
-  const safeProgress = Math.max(
-    0,
-    Math.min(1, progress),
-  );
-
-  const activeIndex =
-    frameCount > 0
-      ? Math.min(
-          frameCount - 1,
-          Math.round(
-            safeProgress *
-              (frameCount - 1),
-          ),
-        )
-      : 0;
 
   // ==========================================================
   // SCROLL LENGTH
@@ -376,7 +490,7 @@ export function Hero() {
       : HERO_SCROLL_LENGTH_VH;
 
   // ==========================================================
-  // EMPTY STATE
+  // EMPTY
   // ==========================================================
 
   if (frameCount === 0) {
@@ -397,7 +511,7 @@ export function Hero() {
           overflow-hidden
           bg-black
         "
-        aria-label="رحلة الوصول"
+        aria-label="جِذع AI"
       >
         <img
           src={frames[0].src}
@@ -426,14 +540,17 @@ export function Hero() {
             items-center
           "
         >
-          <HeroContent />
+          <HeroContent
+            stage={heroStages[0]}
+            reducedMotion
+          />
         </div>
       </section>
     );
   }
 
   // ==========================================================
-  // CINEMATIC CANVAS SCROLL HERO
+  // CINEMATIC HERO
   // ==========================================================
 
   return (
@@ -447,12 +564,8 @@ export function Hero() {
       style={{
         height: `${scrollLength}vh`,
       }}
-      aria-label="رحلة الوصول من التواصل إلى النتيجة"
+      aria-label="جِذع AI — منظومة الحلول الذكية"
     >
-      {/* ======================================================
-          STICKY VIEWPORT
-          ====================================================== */}
-
       <div
         className="
           sticky
@@ -491,13 +604,13 @@ export function Hero() {
         </div>
 
         {/* ====================================================
-            CINEMATIC OVERLAYS
+            OVERLAYS
             ==================================================== */}
 
         <HeroOverlays />
 
         {/* ====================================================
-            HERO CONTENT
+            CONTENT
             ==================================================== */}
 
         <div
@@ -511,7 +624,61 @@ export function Hero() {
             items-center
           "
         >
-          <HeroContent />
+          <AnimatePresence
+            mode="wait"
+            initial={false}
+          >
+            <motion.div
+              key={`${activeStage.startFrame}-${activeStage.endFrame}`}
+              className="w-full"
+              initial={{
+                opacity: 0,
+                y: 18,
+                filter:
+                  "blur(3px)",
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                filter:
+                  "blur(0px)",
+              }}
+              exit={{
+                opacity: 0,
+                y: -14,
+                filter:
+                  "blur(2px)",
+              }}
+              transition={{
+                enter: {
+                  duration:
+                    TEXT_ENTER_DURATION,
+                  ease: [
+                    0.22,
+                    1,
+                    0.36,
+                    1,
+                  ],
+                },
+                exit: {
+                  duration:
+                    TEXT_EXIT_DURATION,
+                  ease: [
+                    0.4,
+                    0,
+                    1,
+                    1,
+                  ],
+                },
+              }}
+            >
+              <HeroContent
+                stage={
+                  activeStage
+                }
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* ====================================================
@@ -537,10 +704,12 @@ export function Hero() {
               tracking-[0.2em]
               text-white/65
               tabular-nums
+              font-english
             "
+            dir="ltr"
           >
             {String(
-              activeIndex + 1,
+              activeFrame,
             ).padStart(2, "0")}
 
             {" / "}
@@ -553,29 +722,34 @@ export function Hero() {
           <div
             className="
               h-px
-              w-24
+              w-28
               overflow-hidden
+              rounded-full
               bg-white/20
             "
           >
-            <div
+            <motion.div
               className="
                 h-full
-                bg-[#C89B5C]
+                bg-brass
               "
-              style={{
+              animate={{
                 width: `${
-                  ((activeIndex + 1) /
+                  ((activeFrame) /
                     frameCount) *
                   100
                 }%`,
+              }}
+              transition={{
+                duration: 0.15,
+                ease: "linear",
               }}
             />
           </div>
         </div>
 
         {/* ====================================================
-            LOADING INDICATOR
+            LOADING
             ==================================================== */}
 
         {!preloaded && (
@@ -590,6 +764,7 @@ export function Hero() {
               text-xs
               text-white/40
               sm:block
+              font-english
             "
           >
             Loading
@@ -601,24 +776,252 @@ export function Hero() {
 }
 
 // ============================================================
+// HERO CONTENT
+// ============================================================
+
+type HeroContentProps = {
+  stage: HeroStage;
+  reducedMotion?: boolean;
+};
+
+function HeroContent({
+  stage,
+  reducedMotion = false,
+}: HeroContentProps) {
+  return (
+    <div
+      className="
+        w-full
+        flex
+        flex-col
+        items-end
+        text-right
+        max-w-4xl
+        mr-0
+        ml-auto
+        py-32
+      "
+    >
+      {/* ======================================================
+          STAGE LABEL
+          ====================================================== */}
+
+      <motion.div
+        initial={
+          reducedMotion
+            ? {
+                opacity: 1,
+                y: 0,
+              }
+            : {
+                opacity: 0,
+                y: 10,
+              }
+        }
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.4,
+        }}
+        className="
+          mb-5
+          flex
+          items-center
+          gap-3
+          text-sm
+          font-medium
+          text-brass
+        "
+      >
+        <span
+          className="
+            h-px
+            w-10
+            bg-brass/70
+          "
+        />
+
+        <span>
+          {stage.label}
+        </span>
+      </motion.div>
+
+      {/* ======================================================
+          HEADLINE
+          ====================================================== */}
+
+      <motion.h1
+        initial={
+          reducedMotion
+            ? {
+                opacity: 1,
+                y: 0,
+                filter:
+                  "blur(0px)",
+              }
+            : {
+                opacity: 0,
+                y: 20,
+                filter:
+                  "blur(3px)",
+              }
+        }
+        animate={{
+          opacity: 1,
+          y: 0,
+          filter:
+            "blur(0px)",
+        }}
+        transition={{
+          duration: 0.55,
+          delay: 0.04,
+          ease: [
+            0.22,
+            1,
+            0.36,
+            1,
+          ],
+        }}
+        className="
+          font-display
+          font-bold
+          text-4xl
+          leading-[1.08]
+          tracking-tight
+          text-white
+          sm:text-5xl
+          lg:text-7xl
+          max-w-4xl
+          drop-shadow-[0_5px_30px_rgba(0,0,0,0.55)]
+        "
+      >
+        {stage.headline}
+      </motion.h1>
+
+      {/* ======================================================
+          SUBHEADLINE
+          ====================================================== */}
+
+      <motion.p
+        initial={
+          reducedMotion
+            ? {
+                opacity: 1,
+                y: 0,
+                filter:
+                  "blur(0px)",
+              }
+            : {
+                opacity: 0,
+                y: 16,
+                filter:
+                  "blur(3px)",
+              }
+        }
+        animate={{
+          opacity: 1,
+          y: 0,
+          filter:
+            "blur(0px)",
+        }}
+        transition={{
+          duration: 0.55,
+          delay: 0.13,
+          ease: [
+            0.22,
+            1,
+            0.36,
+            1,
+          ],
+        }}
+        className="
+          mt-6
+          max-w-2xl
+          text-lg
+          leading-relaxed
+          text-white/82
+          sm:text-xl
+          lg:text-2xl
+          drop-shadow-[0_3px_18px_rgba(0,0,0,0.5)]
+        "
+      >
+        {stage.subheadline}
+      </motion.p>
+
+      {/* ======================================================
+          CTA
+          ====================================================== */}
+
+      <motion.div
+        initial={
+          reducedMotion
+            ? {
+                opacity: 1,
+                y: 0,
+              }
+            : {
+                opacity: 0,
+                y: 14,
+              }
+        }
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.5,
+          delay: 0.2,
+          ease: [
+            0.22,
+            1,
+            0.36,
+            1,
+          ],
+        }}
+        className="
+          mt-8
+          flex
+          flex-col
+          items-stretch
+          gap-4
+          sm:flex-row
+          sm:items-center
+        "
+      >
+        <Button to="/طلب-استشارة">
+          {heroContent.ctaPrimary}
+        </Button>
+
+        <Button
+          to="/كيف-نعمل"
+          variant="secondary"
+        >
+          {heroContent.ctaSecondary}
+        </Button>
+      </motion.div>
+    </div>
+  );
+}
+
+// ============================================================
 // CINEMATIC OVERLAYS
 // ============================================================
 
 function HeroOverlays() {
   return (
     <>
-      {/* Main dark overlay */}
       <div
         className="
           pointer-events-none
           absolute
           inset-0
           z-[2]
-          bg-black/30
+          bg-black/25
         "
       />
 
-      {/* Right-side readability gradient */}
       <div
         className="
           pointer-events-none
@@ -626,13 +1029,12 @@ function HeroOverlays() {
           inset-0
           z-[3]
           bg-gradient-to-l
-          from-black/85
-          via-black/40
+          from-black/90
+          via-black/45
           to-transparent
         "
       />
 
-      {/* Bottom cinematic fade */}
       <div
         className="
           pointer-events-none
@@ -640,15 +1042,14 @@ function HeroOverlays() {
           inset-x-0
           bottom-0
           z-[3]
-          h-56
+          h-64
           bg-gradient-to-t
-          from-black/85
-          via-black/30
+          from-black/90
+          via-black/35
           to-transparent
         "
       />
 
-      {/* Top cinematic fade */}
       <div
         className="
           pointer-events-none
@@ -656,15 +1057,15 @@ function HeroOverlays() {
           inset-x-0
           top-0
           z-[3]
-          h-36
+          h-40
           bg-gradient-to-b
-          from-black/45
+          from-black/55
           to-transparent
         "
       />
 
       {/* ======================================================
-          AI CONNECTION LINE
+          SUBTLE NETWORK LINE
           ====================================================== */}
 
       <svg
@@ -677,7 +1078,7 @@ function HeroOverlays() {
           w-[140%]
           max-w-3xl
           -translate-x-1/2
-          opacity-30
+          opacity-25
         "
         viewBox="0 0 600 300"
         fill="none"
@@ -713,169 +1114,20 @@ function HeroOverlays() {
           }}
         />
       </svg>
+
+      {/* ======================================================
+          VIGNETTE
+          ====================================================== */}
+
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          z-[4]
+          bg-[radial-gradient(circle_at_center,transparent_35%,rgba(0,0,0,0.38)_100%)]
+        "
+      />
     </>
-  );
-}
-
-// ============================================================
-// HERO CONTENT
-// ============================================================
-
-function HeroContent() {
-  const reducedMotion =
-    useReducedMotion();
-
-  return (
-    <div
-      className="
-        w-full
-        flex
-        flex-col
-        items-end
-        text-right
-        gap-8
-        max-w-4xl
-        mr-0
-        ml-auto
-        py-32
-      "
-    >
-      {/* ======================================================
-          HEADLINE
-          ====================================================== */}
-
-      <motion.h1
-        initial={
-          reducedMotion
-            ? {
-                opacity: 1,
-                y: 0,
-              }
-            : {
-                opacity: 0,
-                y: 16,
-              }
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.7,
-          ease: [
-            0.22,
-            1,
-            0.36,
-            1,
-          ],
-        }}
-        className="
-          font-display
-          text-4xl
-          leading-[1.1]
-          text-white
-          sm:text-5xl
-          lg:text-7xl
-          max-w-4xl
-          drop-shadow-[0_4px_20px_rgba(0,0,0,0.55)]
-        "
-      >
-        {heroContent.headline}
-      </motion.h1>
-
-      {/* ======================================================
-          SUBHEADLINE
-          ====================================================== */}
-
-      <motion.p
-        initial={
-          reducedMotion
-            ? {
-                opacity: 1,
-                y: 0,
-              }
-            : {
-                opacity: 0,
-                y: 16,
-              }
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.7,
-          delay: 0.15,
-          ease: [
-            0.22,
-            1,
-            0.36,
-            1,
-          ],
-        }}
-        className="
-          max-w-2xl
-          text-lg
-          leading-relaxed
-          text-white/85
-          sm:text-xl
-          lg:text-2xl
-          drop-shadow-[0_3px_15px_rgba(0,0,0,0.5)]
-        "
-      >
-        {heroContent.subheadline}
-      </motion.p>
-
-      {/* ======================================================
-          CTA
-          ====================================================== */}
-
-      <motion.div
-        initial={
-          reducedMotion
-            ? {
-                opacity: 1,
-                y: 0,
-              }
-            : {
-                opacity: 0,
-                y: 16,
-              }
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.7,
-          delay: 0.3,
-          ease: [
-            0.22,
-            1,
-            0.36,
-            1,
-          ],
-        }}
-        className="
-          flex
-          flex-col
-          items-stretch
-          gap-4
-          sm:flex-row
-          sm:items-center
-        "
-      >
-        <Button to="/طلب-استشارة">
-          {heroContent.ctaPrimary}
-        </Button>
-
-        <Button
-          to="/كيف-نعمل"
-          variant="secondary"
-        >
-          {heroContent.ctaSecondary}
-        </Button>
-      </motion.div>
-    </div>
   );
 }

@@ -38,20 +38,19 @@ export const processSteps: ProcessStep[] = [
 ];
 
 // ============================================================
-// 50-FRAME HERO SCROLL SEQUENCE
+// 50-FRAME HERO SEQUENCE
 // ============================================================
 //
-// الصور موجودة داخل:
+// الصور:
 //
 // src/assets/sequence/
+// ├── ezgif-frame-001.jpg
+// ├── ezgif-frame-002.jpg
+// ├── ...
+// └── ezgif-frame-050.jpg
 //
-// ezgif-frame-001.jpg
-// ezgif-frame-002.jpg
-// ...
-// ezgif-frame-050.jpg
-//
-// يتم استخدام import.meta.glob حتى يقوم Vite باكتشاف الصور
-// وإدخالها ضمن build assets بشكل صحيح.
+// import.meta.glob يجعل Vite يتعامل مع الصور كـ assets
+// حقيقية أثناء التطوير والـ production build.
 // ============================================================
 
 const frameAssets = import.meta.glob(
@@ -72,10 +71,15 @@ export const sequenceFrames: SequenceFrame[] = Array.from(
   (_, index) => {
     const number = String(index + 1).padStart(3, "0");
 
-    const filePath =
-      `/src/assets/sequence/ezgif-frame-${number}.jpg`;
+    const filePath = `/src/assets/sequence/ezgif-frame-${number}.jpg`;
 
     const imageUrl = frameAssets[filePath];
+
+    if (!imageUrl) {
+      throw new Error(
+        `[Wusool AI] Sequence frame not found: ezgif-frame-${number}.jpg`,
+      );
+    }
 
     return {
       id: `frame-${number}`,

@@ -15,9 +15,6 @@ import { useScrollProgress } from "@/hooks/useScrollProgress";
 const HERO_SCROLL_LENGTH_VH = 500;
 const HERO_SCROLL_LENGTH_VH_LIGHT = 320;
 
-// مدة الانتقال بين اللقطات.
-// قيمة صغيرة جدًا تجعل الحركة مرتبطة بالتمرير بشكل مباشر.
-// قيمة أكبر تجعل الانتقال سينمائيًا أكثر.
 const FRAME_TRANSITION_MS = 180;
 
 // ============================================================
@@ -36,14 +33,6 @@ export function Hero() {
 
   // ==========================================================
   // PRELOAD ALL FRAMES
-  // ==========================================================
-  //
-  // أهم تغيير هنا:
-  //
-  // لا ننتظر وصول المستخدم إلى Frame معين حتى نبدأ تحميله.
-  //
-  // نقوم بتحميل جميع الـ50 Frame مسبقًا حتى لا تظهر الخلفية
-  // السوداء بين Frame وآخر.
   // ==========================================================
 
   const [preloaded, setPreloaded] =
@@ -69,7 +58,6 @@ export function Hero() {
             };
 
             image.onerror = () => {
-              // حتى لو فشلت صورة واحدة لا نوقف الـHero بالكامل.
               resolve();
             };
 
@@ -113,10 +101,7 @@ export function Hero() {
       index,
       frameCount - 1,
     );
-  }, [
-    progress,
-    frameCount,
-  ]);
+  }, [progress, frameCount]);
 
   // ==========================================================
   // SCROLL LENGTH
@@ -161,6 +146,8 @@ export function Hero() {
             w-full
             object-cover
           "
+          loading="eager"
+          decoding="async"
         />
 
         <HeroOverlays />
@@ -238,11 +225,7 @@ export function Hero() {
                   alt={frame.alt}
                   draggable={false}
                   decoding="async"
-                  loading={
-                    index === 0
-                      ? "eager"
-                      : "auto"
-                  }
+                  loading="eager"
                   className="
                     absolute
                     inset-0

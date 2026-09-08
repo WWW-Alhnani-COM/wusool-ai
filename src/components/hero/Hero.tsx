@@ -1,27 +1,28 @@
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+
 import { heroContent } from "@/data/content";
+import { sequenceFrames } from "@/data/process";
 import { Button } from "@/components/ui/Button";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useIsLowPowerDevice } from "@/hooks/useIsLowPowerDevice";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
-import { sequenceFrames } from "@/data/process";
-import { useEffect, useMemo, useState } from "react";
 
 // ============================================================
-// HERO SCROLL SETTINGS
+// HERO SCROLL CONFIGURATION
 // ============================================================
 
-// عدد ارتفاعات الشاشة التي يحتاجها المستخدم
-// للانتقال من Frame 001 إلى Frame 050.
-//
-// الرقم الأكبر = حركة أبطأ وأكثر سينمائية.
 const HERO_SCROLL_LENGTH_VH = 500;
-
-// للأجهزة الضعيفة
 const HERO_SCROLL_LENGTH_VH_LIGHT = 320;
 
-// عدد الصور التي يتم تحميلها حول الصورة الحالية
-const PRELOAD_WINDOW = 3;
+// مدة الانتقال بين اللقطات.
+// قيمة صغيرة جدًا تجعل الحركة مرتبطة بالتمرير بشكل مباشر.
+// قيمة أكبر تجعل الانتقال سينمائيًا أكثر.
+const FRAME_TRANSITION_MS = 180;
+
+// ============================================================
+// HERO
+// ============================================================
 
 export function Hero() {
   const reducedMotion = useReducedMotion();
@@ -34,6 +35,63 @@ export function Hero() {
   const frameCount = frames.length;
 
   // ==========================================================
+  // PRELOAD ALL FRAMES
+  // ==========================================================
+  //
+  // أهم تغيير هنا:
+  //
+  // لا ننتظر وصول المستخدم إلى Frame معين حتى نبدأ تحميله.
+  //
+  // نقوم بتحميل جميع الـ50 Frame مسبقًا حتى لا تظهر الخلفية
+  // السوداء بين Frame وآخر.
+  // ==========================================================
+
+  const [preloaded, setPreloaded] =
+    useState(false);
+
+  useEffect(() => {
+    if (frameCount === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const preloadImages = async () => {
+      const promises = frames.map(
+        (frame) =>
+          new Promise<void>((resolve) => {
+            const image = new Image();
+
+            image.decoding = "async";
+
+            image.onload = () => {
+              resolve();
+            };
+
+            image.onerror = () => {
+              // حتى لو فشلت صورة واحدة لا نوقف الـHero بالكامل.
+              resolve();
+            };
+
+            image.src = frame.src;
+          }),
+      );
+
+      await Promise.all(promises);
+
+      if (!cancelled) {
+        setPreloaded(true);
+      }
+    };
+
+    preloadImages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [frames, frameCount]);
+
+  // ==========================================================
   // ACTIVE FRAME
   // ==========================================================
 
@@ -42,57 +100,21 @@ export function Hero() {
       return 0;
     }
 
-    const normalizedProgress = Math.max(
+    const safeProgress = Math.max(
       0,
       Math.min(1, progress),
     );
 
     const index = Math.floor(
-      normalizedProgress * frameCount,
+      safeProgress * frameCount,
     );
 
     return Math.min(
       index,
       frameCount - 1,
     );
-  }, [progress, frameCount]);
-
-  // ==========================================================
-  // PRELOAD NEARBY FRAMES
-  // ==========================================================
-
-  const [loadedFrames, setLoadedFrames] =
-    useState<Set<number>>(
-      () => new Set([0]),
-    );
-
-  useEffect(() => {
-    if (frameCount === 0) {
-      return;
-    }
-
-    setLoadedFrames((previous) => {
-      const next = new Set(previous);
-
-      for (
-        let i =
-          activeIndex - PRELOAD_WINDOW;
-        i <=
-        activeIndex + PRELOAD_WINDOW;
-        i++
-      ) {
-        if (
-          i >= 0 &&
-          i < frameCount
-        ) {
-          next.add(i);
-        }
-      }
-
-      return next;
-    });
   }, [
-    activeIndex,
+    progress,
     frameCount,
   ]);
 
@@ -118,17 +140,20 @@ export function Hero() {
   // ==========================================================
 
   if (reducedMotion) {
-    const firstFrame = frames[0];
-
     return (
       <section
-        className="relative min-h-screen w-full overflow-hidden"
+        className="
+          relative
+          min-h-screen
+          w-full
+          overflow-hidden
+          bg-black
+        "
         aria-label="رحلة الوصول"
       >
-        {/* Background */}
         <img
-          src={firstFrame.src}
-          alt={firstFrame.alt}
+          src={frames[0].src}
+          alt={frames[0].alt}
           className="
             absolute
             inset-0
@@ -138,28 +163,8 @@ export function Hero() {
           "
         />
 
-        {/* Dark overlay */}
-        <div
-          className="
-            absolute
-            inset-0
-            bg-black/55
-          "
-        />
+        <HeroOverlays />
 
-        {/* Gradient */}
-        <div
-          className="
-            absolute
-            inset-0
-            bg-gradient-to-l
-            from-black/85
-            via-black/45
-            to-black/20
-          "
-        />
-
-        {/* Content */}
         <div
           className="
             relative
@@ -184,14 +189,18 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative w-full"
+      className="
+        relative
+        w-full
+        bg-black
+      "
       style={{
         height: `${scrollLength}vh`,
       }}
       aria-label="رحلة الوصول من التواصل إلى النتيجة"
     >
       {/* ======================================================
-          STICKY VIEWPORT
+          STICKY CINEMATIC VIEWPORT
           ====================================================== */}
 
       <div
@@ -205,7 +214,7 @@ export function Hero() {
         "
       >
         {/* ====================================================
-            FRAME STACK
+            FRAME CONTAINER
             ==================================================== */}
 
         <div
@@ -214,16 +223,11 @@ export function Hero() {
             inset-0
             h-full
             w-full
+            bg-black
           "
         >
           {frames.map(
             (frame, index) => {
-              if (
-                !loadedFrames.has(index)
-              ) {
-                return null;
-              }
-
               const isActive =
                 index === activeIndex;
 
@@ -232,27 +236,31 @@ export function Hero() {
                   key={frame.id}
                   src={frame.src}
                   alt={frame.alt}
+                  draggable={false}
+                  decoding="async"
                   loading={
                     index === 0
                       ? "eager"
-                      : "lazy"
+                      : "auto"
                   }
-                  decoding="async"
                   className="
                     absolute
                     inset-0
                     h-full
                     w-full
                     object-cover
-                    transition-opacity
-                    duration-150
-                    ease-linear
+                    select-none
+                    pointer-events-none
+                    will-change-[opacity]
                   "
                   style={{
                     opacity:
                       isActive
                         ? 1
                         : 0,
+
+                    transition:
+                      `opacity ${FRAME_TRANSITION_MS}ms linear`,
                   }}
                 />
               );
@@ -261,122 +269,10 @@ export function Hero() {
         </div>
 
         {/* ====================================================
-            CINEMATIC DARK OVERLAY
+            CINEMATIC OVERLAYS
             ==================================================== */}
 
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[2]
-            bg-black/35
-          "
-        />
-
-        {/* ====================================================
-            RIGHT SIDE GRADIENT
-            ==================================================== */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            z-[3]
-            bg-gradient-to-l
-            from-black/85
-            via-black/45
-            to-transparent
-          "
-        />
-
-        {/* ====================================================
-            BOTTOM GRADIENT
-            ==================================================== */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-x-0
-            bottom-0
-            z-[3]
-            h-48
-            bg-gradient-to-t
-            from-black/80
-            to-transparent
-          "
-        />
-
-        {/* ====================================================
-            TOP GRADIENT
-            ==================================================== */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-x-0
-            top-0
-            z-[3]
-            h-32
-            bg-gradient-to-b
-            from-black/45
-            to-transparent
-          "
-        />
-
-        {/* ====================================================
-            DECORATIVE AI CONNECTION LINE
-            ==================================================== */}
-
-        <svg
-          className="
-            pointer-events-none
-            absolute
-            -top-10
-            left-1/2
-            z-[4]
-            w-[140%]
-            max-w-3xl
-            -translate-x-1/2
-            opacity-30
-          "
-          viewBox="0 0 600 300"
-          fill="none"
-          aria-hidden="true"
-        >
-          <motion.path
-            d="
-              M 20 250
-              C 150 250,
-              180 60,
-              320 80
-              C 430 95,
-              460 220,
-              580 200
-            "
-            stroke="#C89B5C"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            initial={{
-              pathLength: 0,
-            }}
-            animate={{
-              pathLength: 1,
-            }}
-            transition={{
-              duration: 1.6,
-              ease: [
-                0.22,
-                1,
-                0.36,
-                1,
-              ],
-            }}
-          />
-        </svg>
+        <HeroOverlays />
 
         {/* ====================================================
             HERO CONTENT
@@ -397,7 +293,7 @@ export function Hero() {
         </div>
 
         {/* ====================================================
-            FRAME INDICATOR
+            FRAME COUNTER
             ==================================================== */}
 
         <div
@@ -412,20 +308,21 @@ export function Hero() {
             items-center
             gap-3
           "
-          aria-hidden="true"
         >
           <span
             className="
               text-xs
               tracking-[0.2em]
-              text-white/60
+              text-white/65
               tabular-nums
             "
           >
             {String(
               activeIndex + 1,
             ).padStart(2, "0")}
+
             {" / "}
+
             {String(
               frameCount,
             ).padStart(2, "0")}
@@ -445,6 +342,7 @@ export function Hero() {
                 bg-[#C89B5C]
                 transition-[width]
                 duration-100
+                ease-linear
               "
               style={{
                 width: `${
@@ -456,8 +354,147 @@ export function Hero() {
             />
           </div>
         </div>
+
+        {/* ====================================================
+            LOADING INDICATOR
+            ==================================================== */}
+
+        {!preloaded && (
+          <div
+            className="
+              pointer-events-none
+              absolute
+              bottom-8
+              right-8
+              z-20
+              hidden
+              text-xs
+              text-white/40
+              sm:block
+            "
+          >
+            Loading
+          </div>
+        )}
       </div>
     </section>
+  );
+}
+
+// ============================================================
+// CINEMATIC OVERLAYS
+// ============================================================
+
+function HeroOverlays() {
+  return (
+    <>
+      {/* Main dark overlay */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          z-[2]
+          bg-black/30
+        "
+      />
+
+      {/* Right-side readability gradient */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          z-[3]
+          bg-gradient-to-l
+          from-black/85
+          via-black/40
+          to-transparent
+        "
+      />
+
+      {/* Bottom cinematic fade */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-x-0
+          bottom-0
+          z-[3]
+          h-56
+          bg-gradient-to-t
+          from-black/85
+          via-black/30
+          to-transparent
+        "
+      />
+
+      {/* Top cinematic fade */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-x-0
+          top-0
+          z-[3]
+          h-36
+          bg-gradient-to-b
+          from-black/45
+          to-transparent
+        "
+      />
+
+      {/* ======================================================
+          AI CONNECTION LINE
+          ====================================================== */}
+
+      <svg
+        className="
+          pointer-events-none
+          absolute
+          -top-10
+          left-1/2
+          z-[4]
+          w-[140%]
+          max-w-3xl
+          -translate-x-1/2
+          opacity-30
+        "
+        viewBox="0 0 600 300"
+        fill="none"
+        aria-hidden="true"
+      >
+        <motion.path
+          d="
+            M 20 250
+            C 150 250,
+            180 60,
+            320 80
+            C 430 95,
+            460 220,
+            580 200
+          "
+          stroke="#C89B5C"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          initial={{
+            pathLength: 0,
+          }}
+          animate={{
+            pathLength: 1,
+          }}
+          transition={{
+            duration: 1.6,
+            ease: [
+              0.22,
+              1,
+              0.36,
+              1,
+            ],
+          }}
+        />
+      </svg>
+    </>
   );
 }
 
@@ -571,7 +608,7 @@ function HeroContent() {
       </motion.p>
 
       {/* ======================================================
-          CTA BUTTONS
+          CTA
           ====================================================== */}
 
       <motion.div

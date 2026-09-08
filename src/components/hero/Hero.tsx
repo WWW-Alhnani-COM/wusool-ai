@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { heroContent } from "@/data/content";
 import { sequenceFrames } from "@/data/process";
@@ -15,8 +20,6 @@ import { useScrollProgress } from "@/hooks/useScrollProgress";
 const HERO_SCROLL_LENGTH_VH = 500;
 const HERO_SCROLL_LENGTH_VH_LIGHT = 320;
 
-const FRAME_TRANSITION_MS = 180;
-
 // ============================================================
 // HERO
 // ============================================================
@@ -31,12 +34,24 @@ export function Hero() {
   const frames = sequenceFrames;
   const frameCount = frames.length;
 
-  // ==========================================================
-  // PRELOAD ALL FRAMES
-  // ==========================================================
+  const canvasRef =
+    useRef<HTMLCanvasElement | null>(null);
+
+  const imagesRef =
+    useRef<HTMLImageElement[]>([]);
+
+  const animationFrameRef =
+    useRef<number | null>(null);
+
+  const lastFrameRef =
+    useRef(-1);
 
   const [preloaded, setPreloaded] =
     useState(false);
+
+  // ==========================================================
+  // PRELOAD + DECODE ALL FRAMES
+  // ==========================================================
 
   useEffect(() => {
     if (frameCount === 0) {
@@ -46,46 +61,191 @@ export function Hero() {
     let cancelled = false;
 
     const preloadImages = async () => {
-      const promises = frames.map(
-        (frame) =>
-          new Promise<void>((resolve) => {
-            const image = new Image();
+      const loadedImages: HTMLImageElement[] = [];
 
-            image.decoding = "async";
+      for (const frame of frames) {
+        if (cancelled) {
+          return;
+        }
 
-            image.onload = () => {
-              resolve();
-            };
+        const image = new Image();
 
-            image.onerror = () => {
-              resolve();
-            };
+        image.decoding = "async";
+        image.loading = "eager";
+        image.src = frame.src;
 
-            image.src = frame.src;
-          }),
-      );
+        try {
+          await image.decode();
+        } catch {
+          await new Promise<void>((resolve) => {
+            image.onload = () => resolve();
+            image.onerror = () => resolve();
+          });
+        }
 
-      await Promise.all(promises);
-
-      if (!cancelled) {
-        setPreloaded(true);
+        loadedImages.push(image);
       }
+
+      if (cancelled) {
+        return;
+      }
+
+      imagesRef.current = loadedImages;
+      setPreloaded(true);
     };
 
     preloadImages();
 
     return () => {
       cancelled = true;
+      imagesRef.current = [];
     };
   }, [frames, frameCount]);
 
   // ==========================================================
-  // ACTIVE FRAME
+  // CANVAS RESIZE
   // ==========================================================
 
-  const activeIndex = useMemo(() => {
-    if (frameCount === 0) {
-      return 0;
+  const resizeCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+
+    const dpr = Math.min(
+      window.devicePixelRatio || 1,
+      lowPower ? 1.5 : 2,
+    );
+
+    const width = Math.max(
+      1,
+      Math.round(rect.width * dpr),
+    );
+
+    const height = Math.max(
+      1,
+      Math.round(rect.height * dpr),
+    );
+
+    if (
+      canvas.width !== width ||
+      canvas.height !== height
+    ) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+  }, [lowPower]);
+
+  // ==========================================================
+  // DRAW FRAME
+  // ==========================================================
+
+  const drawFrame = useCallback(
+    (frameIndex: number) => {
+      const canvas = canvasRef.current;
+      const image =
+        imagesRef.current[frameIndex];
+
+      if (!canvas || !image) {
+        return;
+      }
+
+      resizeCanvas();
+
+      const context =
+        canvas.getContext("2d", {
+          alpha: false,
+          desynchronized: true,
+        });
+
+      if (!context) {
+        return;
+      }
+
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      const imageWidth = image.naturalWidth;
+      const imageHeight = image.naturalHeight;
+
+      if (
+        !imageWidth ||
+        !imageHeight
+      ) {
+        return;
+      }
+
+      // ======================================================
+      // COVER CALCULATION
+      // ======================================================
+
+      const scale = Math.max(
+        canvasWidth / imageWidth,
+        canvasHeight / imageHeight,
+      );
+
+      const drawWidth =
+        imageWidth * scale;
+
+      const drawHeight =
+        imageHeight * scale;
+
+      const offsetX =
+        (canvasWidth - drawWidth) / 2;
+
+      const offsetY =
+        (canvasHeight - drawHeight) / 2;
+
+      // ======================================================
+      // DRAW
+      // ======================================================
+
+      context.setTransform(
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+      );
+
+      // Never expose transparent/black canvas
+      // between frames.
+      context.fillStyle = "#000";
+      context.fillRect(
+        0,
+        0,
+        canvasWidth,
+        canvasHeight,
+      );
+
+      context.drawImage(
+        image,
+        offsetX,
+        offsetY,
+        drawWidth,
+        drawHeight,
+      );
+
+      lastFrameRef.current =
+        frameIndex;
+    },
+    [resizeCanvas],
+  );
+
+  // ==========================================================
+  // DRAW CURRENT FRAME
+  // ==========================================================
+
+  useEffect(() => {
+    if (
+      !preloaded ||
+      frameCount === 0
+    ) {
+      return;
     }
 
     const safeProgress = Math.max(
@@ -93,15 +253,118 @@ export function Hero() {
       Math.min(1, progress),
     );
 
-    const index = Math.floor(
-      safeProgress * frameCount,
+    const frameIndex = Math.min(
+      frameCount - 1,
+      Math.round(
+        safeProgress *
+          (frameCount - 1),
+      ),
     );
 
-    return Math.min(
-      index,
-      frameCount - 1,
+    if (
+      frameIndex ===
+      lastFrameRef.current
+    ) {
+      return;
+    }
+
+    if (
+      animationFrameRef.current !== null
+    ) {
+      cancelAnimationFrame(
+        animationFrameRef.current,
+      );
+    }
+
+    animationFrameRef.current =
+      requestAnimationFrame(() => {
+        drawFrame(frameIndex);
+
+        animationFrameRef.current =
+          null;
+      });
+
+    return () => {
+      if (
+        animationFrameRef.current !== null
+      ) {
+        cancelAnimationFrame(
+          animationFrameRef.current,
+        );
+
+        animationFrameRef.current =
+          null;
+      }
+    };
+  }, [
+    progress,
+    preloaded,
+    frameCount,
+    drawFrame,
+  ]);
+
+  // ==========================================================
+  // INITIAL CANVAS FRAME
+  // ==========================================================
+
+  useEffect(() => {
+    if (!preloaded) {
+      return;
+    }
+
+    resizeCanvas();
+
+    drawFrame(0);
+
+    const handleResize = () => {
+      resizeCanvas();
+
+      if (
+        lastFrameRef.current >= 0
+      ) {
+        drawFrame(
+          lastFrameRef.current,
+        );
+      }
+    };
+
+    window.addEventListener(
+      "resize",
+      handleResize,
+      { passive: true },
     );
-  }, [progress, frameCount]);
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        handleResize,
+      );
+    };
+  }, [
+    preloaded,
+    resizeCanvas,
+    drawFrame,
+  ]);
+
+  // ==========================================================
+  // ACTIVE FRAME
+  // ==========================================================
+
+  const safeProgress = Math.max(
+    0,
+    Math.min(1, progress),
+  );
+
+  const activeIndex =
+    frameCount > 0
+      ? Math.min(
+          frameCount - 1,
+          Math.round(
+            safeProgress *
+              (frameCount - 1),
+          ),
+        )
+      : 0;
 
   // ==========================================================
   // SCROLL LENGTH
@@ -139,6 +402,8 @@ export function Hero() {
         <img
           src={frames[0].src}
           alt={frames[0].alt}
+          loading="eager"
+          decoding="async"
           className="
             absolute
             inset-0
@@ -146,8 +411,6 @@ export function Hero() {
             w-full
             object-cover
           "
-          loading="eager"
-          decoding="async"
         />
 
         <HeroOverlays />
@@ -170,7 +433,7 @@ export function Hero() {
   }
 
   // ==========================================================
-  // CINEMATIC SCROLL HERO
+  // CINEMATIC CANVAS SCROLL HERO
   // ==========================================================
 
   return (
@@ -187,7 +450,7 @@ export function Hero() {
       aria-label="رحلة الوصول من التواصل إلى النتيجة"
     >
       {/* ======================================================
-          STICKY CINEMATIC VIEWPORT
+          STICKY VIEWPORT
           ====================================================== */}
 
       <div
@@ -201,7 +464,7 @@ export function Hero() {
         "
       >
         {/* ====================================================
-            FRAME CONTAINER
+            CANVAS
             ==================================================== */}
 
         <div
@@ -213,42 +476,18 @@ export function Hero() {
             bg-black
           "
         >
-          {frames.map(
-            (frame, index) => {
-              const isActive =
-                index === activeIndex;
-
-              return (
-                <img
-                  key={frame.id}
-                  src={frame.src}
-                  alt={frame.alt}
-                  draggable={false}
-                  decoding="async"
-                  loading="eager"
-                  className="
-                    absolute
-                    inset-0
-                    h-full
-                    w-full
-                    object-cover
-                    select-none
-                    pointer-events-none
-                    will-change-[opacity]
-                  "
-                  style={{
-                    opacity:
-                      isActive
-                        ? 1
-                        : 0,
-
-                    transition:
-                      `opacity ${FRAME_TRANSITION_MS}ms linear`,
-                  }}
-                />
-              );
-            },
-          )}
+          <canvas
+            ref={canvasRef}
+            aria-hidden="true"
+            className="
+              absolute
+              inset-0
+              h-full
+              w-full
+              select-none
+              pointer-events-none
+            "
+          />
         </div>
 
         {/* ====================================================
@@ -323,9 +562,6 @@ export function Hero() {
               className="
                 h-full
                 bg-[#C89B5C]
-                transition-[width]
-                duration-100
-                ease-linear
               "
               style={{
                 width: `${

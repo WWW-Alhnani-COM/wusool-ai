@@ -1,35 +1,188 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   JITHR AI — GLOBAL TYPOGRAPHY
+   ============================================================ */
+
+:root {
+  font-family:
+    "IBM Plex Sans Arabic",
+    "IBM Plex Sans",
+    sans-serif;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
 @layer base {
   html {
     scroll-behavior: smooth;
+    background: #0b0c0f;
   }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
     }
   }
+
   body {
     @apply bg-base text-ink font-body antialiased;
+
+    margin: 0;
+    min-width: 320px;
+    overflow-x: hidden;
   }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  img,
+  canvas,
+  svg {
+    display: block;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
   ::selection {
     @apply bg-brass/30 text-ink;
   }
-  /* Visible, deliberate keyboard focus — never remove outline without replacing it. */
+
   :focus-visible {
-    outline: 2px solid theme("colors.brass.DEFAULT");
+    outline: 2px solid
+      theme("colors.brass.DEFAULT");
+
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: 4px;
   }
 }
+
+/* ============================================================
+   CUSTOM UTILITIES
+   ============================================================ */
 
 @layer utilities {
   .section-px {
     @apply px-6 sm:px-10 lg:px-16;
   }
+
   .container-page {
     @apply mx-auto w-full max-w-6xl;
+  }
+
+  /*
+   * English typography.
+   *
+   * Useful for AI, numbers, counters and
+   * English labels without changing the
+   * Arabic typography.
+   */
+
+  .font-english {
+    font-family:
+      "Manrope",
+      "IBM Plex Sans",
+      sans-serif;
+  }
+
+  /*
+   * Premium glass surface.
+   */
+
+  .glass-surface {
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.075),
+        rgba(255, 255, 255, 0.025)
+      );
+
+    border: 1px solid
+      rgba(255, 255, 255, 0.10);
+
+    box-shadow:
+      0 18px 60px
+        rgba(0, 0, 0, 0.24);
+
+    backdrop-filter:
+      blur(24px)
+      saturate(140%);
+
+    -webkit-backdrop-filter:
+      blur(24px)
+      saturate(140%);
+  }
+
+  /*
+   * Text rendering for large cinematic
+   * Arabic headings.
+   */
+
+  .text-cinematic {
+    text-wrap: balance;
+    letter-spacing: -0.025em;
+  }
+
+  /*
+   * Prevent accidental selection of
+   * cinematic sequence layers.
+   */
+
+  .select-none {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
+  }
+}
+
+/* ============================================================
+   MOBILE TYPOGRAPHY
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .font-display {
+    letter-spacing: -0.02em;
   }
 }

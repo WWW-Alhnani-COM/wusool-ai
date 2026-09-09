@@ -23,12 +23,13 @@ export function ServicesGrid() {
     >
       <Container>
         {/* Section heading */}
-        <div className="mb-14 sm:mb-20 lg:mb-24">
-          <SectionHeading
-            heading="الحلول"
-            description="كل حل يبدأ من مشكلة حقيقية تعيق وصولك."
-          />
-        </div>
+<div className="mb-14 flex w-full justify-center sm:mb-20 lg:mb-24">
+  <SectionHeading
+    heading="الحلول"
+    description="كل حل يبدأ من مشكلة حقيقية تعيق وصولك."
+    align="center"
+  />
+</div>
 
         {/* Solutions list */}
         <div className="border-t border-base-line">

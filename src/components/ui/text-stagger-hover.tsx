@@ -1,9 +1,10 @@
-
 'use client';
-import * as React from 'react';
 
-import { cn } from "@/lib/utils";
-import { motion } from 'framer-motion';
+import * as React from 'react';
+import {
+  motion,
+  type HTMLMotionProps,
+} from 'framer-motion';
 
 export type StaggerDirection = 'start' | 'middle' | 'end';
 
@@ -12,6 +13,13 @@ export interface StaggerOptions {
   staggerValue?: number;
   totalItems: number;
   index: number;
+}
+
+export interface SplitTextResult {
+  words: string[];
+  characters: string[];
+  wordCount: number;
+  characterCount: number;
 }
 
 export function setStaggerDirection({
@@ -24,9 +32,10 @@ export function setStaggerDirection({
     case 'start':
       return index * staggerValue;
 
-    case 'middle':
+    case 'middle': {
       const middleIndex = Math.floor(totalItems / 2);
       return Math.abs(index - middleIndex) * staggerValue;
+    }
 
     case 'end':
       return (totalItems - 1 - index) * staggerValue;
@@ -35,8 +44,8 @@ export function setStaggerDirection({
       return 0;
   }
 }
-export function splitText(text: string): SplitTextResult {
 
+export function splitText(text: string): SplitTextResult {
   if (!text?.trim()) {
     return {
       words: [],
@@ -46,9 +55,9 @@ export function splitText(text: string): SplitTextResult {
     };
   }
 
-  const words = text.split(' ').map((word) => word.concat(' '));
+  const words = text.split(' ').map((word) => `${word} `);
 
-  const characters = words.map((word) => word.split('')).flat(1);
+  const characters = words.flatMap((word) => word.split(''));
 
   return {
     words,
@@ -57,6 +66,7 @@ export function splitText(text: string): SplitTextResult {
     characterCount: characters.length,
   };
 }
+
 export type AnimationT =
   | 'left'
   | 'right'
@@ -70,12 +80,30 @@ export function useAnimationVariants(animation?: AnimationT) {
   return React.useMemo(
     () => ({
       hidden: {
-        x: animation === 'left' ? '-100%' : animation === 'right' ? '100%' : 0,
-        y: animation === 'top' ? '-100%' : animation === 'bottom' ? '100%' : 0,
+        x:
+          animation === 'left'
+            ? '-100%'
+            : animation === 'right'
+              ? '100%'
+              : 0,
+
+        y:
+          animation === 'top'
+            ? '-100%'
+            : animation === 'bottom'
+              ? '100%'
+              : 0,
+
         scale: animation === 'z' ? 0 : 1,
-        filter: animation === 'blur' ? 'blur(10px)' : 'blur(0px)',
+
+        filter:
+          animation === 'blur'
+            ? 'blur(10px)'
+            : 'blur(0px)',
+
         opacity: 0,
       },
+
       visible: {
         x: 0,
         y: 0,
@@ -88,23 +116,31 @@ export function useAnimationVariants(animation?: AnimationT) {
   );
 }
 
-interface TextStaggerHoverProps extends React.HTMLAttributes<HTMLElement> {
+interface TextStaggerHoverProps
+  extends React.HTMLAttributes<HTMLElement> {
   as?: React.ElementType;
 }
 
 interface TextStaggerHoverContextValue {
   isMouseIn: boolean;
 }
-const TextStaggerHoverContext = React.createContext<
-  TextStaggerHoverContextValue | undefined
->(undefined);
+
+const TextStaggerHoverContext =
+  React.createContext<TextStaggerHoverContextValue | undefined>(
+    undefined,
+  );
+
 function useTextStaggerHoverContext() {
-  const context = React.useContext(TextStaggerHoverContext);
+  const context = React.useContext(
+    TextStaggerHoverContext,
+  );
+
   if (!context) {
     throw new Error(
-      'useTextStaggerHoverContext must be used within an TextStaggerHoverContextProvider',
+      'useTextStaggerHoverContext must be used within TextStaggerHover',
     );
   }
+
   return context;
 }
 
@@ -112,28 +148,54 @@ export const TextStaggerHover = ({
   as: Component = 'span',
   children,
   className,
+  onMouseEnter,
+  onMouseLeave,
   ...props
 }: TextStaggerHoverProps) => {
-  const [isMouseIn, setIsMouseIn] = React.useState<boolean>(false);
-  const handleMouse = () => setIsMouseIn((prevState) => !prevState);
+  const [isMouseIn, setIsMouseIn] =
+    React.useState(false);
+
+  const handleMouseEnter = (
+    event: React.MouseEvent<HTMLElement>,
+  ) => {
+    setIsMouseIn(true);
+    onMouseEnter?.(event);
+  };
+
+  const handleMouseLeave = (
+    event: React.MouseEvent<HTMLElement>,
+  ) => {
+    setIsMouseIn(false);
+    onMouseLeave?.(event);
+  };
 
   return (
-    <TextStaggerHoverContext.Provider value={{ isMouseIn }}>
+    <TextStaggerHoverContext.Provider
+      value={{ isMouseIn }}
+    >
       <Component
-        className={cn('relative inline-block overflow-hidden', className)}
+        className={[
+          'relative inline-block overflow-hidden',
+          className,
+        ]
+          .filter(Boolean)
+          .join(' ')}
         {...props}
-        onMouseEnter={handleMouse}
-        onMouseLeave={handleMouse}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {children}
       </Component>
     </TextStaggerHoverContext.Provider>
   );
 };
-interface TextStaggerHoverContentProps extends HTMLMotionProps<'span'> {
+
+interface TextStaggerHoverContentProps
+  extends HTMLMotionProps<'span'> {
   animation?: AnimationT;
   staggerDirection?: StaggerDirection;
 }
+
 export const TextStaggerHoverActive = ({
   animation,
   staggerDirection = 'start',
@@ -142,36 +204,58 @@ export const TextStaggerHoverActive = ({
   transition,
   ...props
 }: TextStaggerHoverContentProps) => {
-  const { characters, characterCount } = splitText(String(children));
-  const animationVariants = useAnimationVariants(animation);
-  const { isMouseIn } = useTextStaggerHoverContext();
+  const { characters, characterCount } =
+    splitText(String(children));
+
+  const animationVariants =
+    useAnimationVariants(animation);
+
+  const { isMouseIn } =
+    useTextStaggerHoverContext();
+
   return (
-    <span className={cn('inline-block text-nowrap', className)}>
-      {characters.map((char, index) => {
-        const staggerDelay = setStaggerDirection({
-          direction: staggerDirection,
-          totalItems: characterCount,
-          index,
-        });
-        return (
-          <motion.span
-            className="inline-block"
-            key={`${char}-${index}`}
-            variants={animationVariants}
-            animate={isMouseIn ? 'hidden' : 'visible'}
-            transition={{
-              delay: staggerDelay,
-              ease: [0.25, 0.46, 0.45, 0.94],
-              duration: 0.3,
-              ...transition,
-            }}
-            {...props}
-          >
-            {char}
-            {char === ' ' && index < characters.length - 1 && <>&nbsp;</>}
-          </motion.span>
-        );
-      })}
+    <span
+      className={[
+        'inline-block whitespace-normal',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {characters.map(
+        (char: string, index: number) => {
+          const staggerDelay =
+            setStaggerDirection({
+              direction: staggerDirection,
+              totalItems: characterCount,
+              index,
+            });
+
+          return (
+            <motion.span
+              className="inline-block"
+              key={`${char}-${index}`}
+              variants={animationVariants}
+              animate={
+                isMouseIn ? 'hidden' : 'visible'
+              }
+              transition={{
+                delay: staggerDelay,
+                ease: [0.25, 0.46, 0.45, 0.94],
+                duration: 0.3,
+                ...transition,
+              }}
+              {...props}
+            >
+              {char}
+              {char === ' ' &&
+                index < characters.length - 1 && (
+                  <>&nbsp;</>
+                )}
+            </motion.span>
+          );
+        },
+      )}
     </span>
   );
 };
@@ -184,36 +268,58 @@ export const TextStaggerHoverHidden = ({
   transition,
   ...props
 }: TextStaggerHoverContentProps) => {
-  const { characters, characterCount } = splitText(String(children));
-  const animationVariants = useAnimationVariants(animation);
-  const { isMouseIn } = useTextStaggerHoverContext();
+  const { characters, characterCount } =
+    splitText(String(children));
+
+  const animationVariants =
+    useAnimationVariants(animation);
+
+  const { isMouseIn } =
+    useTextStaggerHoverContext();
+
   return (
-    <span className={cn('inline-block absolute left-0 top-0 text-nowrap', className)}>
-      {characters.map((char, index) => {
-        const staggerDelay = setStaggerDirection({
-          direction: staggerDirection,
-          totalItems: characterCount,
-          index,
-        });
-        return (
-          <motion.span
-            className="inline-block"
-            key={`${char}-${index}`}
-            variants={animationVariants}
-            animate={isMouseIn ? 'visible' : 'hidden'}
-            transition={{
-              delay: staggerDelay,
-              ease: [0.25, 0.46, 0.45, 0.94],
-              duration: 0.3,
-              ...transition,
-            }}
-            {...props}
-          >
-            {char}
-            {char === ' ' && index < characters.length - 1 && <>&nbsp;</>}
-          </motion.span>
-        );
-      })}
+    <span
+      className={[
+        'absolute left-0 top-0 inline-block whitespace-normal',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {characters.map(
+        (char: string, index: number) => {
+          const staggerDelay =
+            setStaggerDirection({
+              direction: staggerDirection,
+              totalItems: characterCount,
+              index,
+            });
+
+          return (
+            <motion.span
+              className="inline-block"
+              key={`${char}-${index}`}
+              variants={animationVariants}
+              animate={
+                isMouseIn ? 'visible' : 'hidden'
+              }
+              transition={{
+                delay: staggerDelay,
+                ease: [0.25, 0.46, 0.45, 0.94],
+                duration: 0.3,
+                ...transition,
+              }}
+              {...props}
+            >
+              {char}
+              {char === ' ' &&
+                index < characters.length - 1 && (
+                  <>&nbsp;</>
+                )}
+            </motion.span>
+          );
+        },
+      )}
     </span>
   );
 };

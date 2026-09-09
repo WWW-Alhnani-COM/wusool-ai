@@ -9,23 +9,23 @@ export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
-      colors: {
-        base: {
-          DEFAULT: "#0B0C0F", // near-black, warm undertone (not pure #000)
-          raised: "#15171B",
-          line: "#24262B",
-        },
-        ink: {
-          DEFAULT: "#F2EFE9", // warm off-white
-          muted: "#9C978C",
-          faint: "#615D54",
-        },
-        brass: {
-          DEFAULT: "#C89B5C", // primary accent — "الوصول" / signal
-          soft: "#8A6F45",
-          bright: "#E3B87A",
-        },
-      },
+colors: {
+  base: {
+    DEFAULT: "#FFFFFF",
+    raised: "#F7F7F5",
+    line: "#E5E5E0",
+  },
+  ink: {
+    DEFAULT: "#171717",
+    muted: "#666666",
+    faint: "#999999",
+  },
+  brass: {
+    DEFAULT: "#C89B5C",
+    soft: "#8A6F45",
+    bright: "#D9AA6A",
+  },
+},
       fontFamily: {
         display: ["'IBM Plex Sans Arabic'", "'IBM Plex Sans'", "sans-serif"],
         body: ["'IBM Plex Sans Arabic'", "'IBM Plex Sans'", "sans-serif"],

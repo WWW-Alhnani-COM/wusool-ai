@@ -1,4 +1,3 @@
-```tsx
 import {
   useEffect,
   useState,
@@ -420,4 +419,3 @@ export function Header() {
     </header>
   );
 }
-```

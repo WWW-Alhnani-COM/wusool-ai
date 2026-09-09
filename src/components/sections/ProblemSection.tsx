@@ -24,15 +24,22 @@ export function ProblemSection() {
     offset: ['start start', 'end end'],
   });
 
+  /*
+   * مهم:
+   * لا نربط تغيير النص بـ reducedMotion.
+   * حتى على الهاتف يجب أن يتغير النص مع التمرير.
+   */
   useMotionValueEvent(scrollYProgress, 'change', (latest) => {
-    if (reducedMotion) return;
+    const total = problemContent.points.length;
 
     const index = Math.min(
-      problemContent.points.length - 1,
-      Math.floor(latest * problemContent.points.length),
+      total - 1,
+      Math.max(0, Math.floor(latest * total)),
     );
 
-    setActiveIndex(index);
+    setActiveIndex((current) =>
+      current === index ? current : index,
+    );
   });
 
   const totalPoints = problemContent.points.length;
@@ -42,17 +49,8 @@ export function ProblemSection() {
     <section
       ref={sectionRef}
       dir="rtl"
-      className="relative h-[800vh] bg-base"
+      className="relative h-[900vh] bg-base"
     >
-      {/* 
-        Header-safe viewport
-
-        pt-20:
-        مساحة للهيدر على الهاتف
-
-        lg:pt-24:
-        مساحة أكبر للهيدر على الكمبيوتر
-      */}
       <div
         className="
           sticky
@@ -64,7 +62,8 @@ export function ProblemSection() {
           items-center
           overflow-hidden
           pt-20
-          lg:pt-24
+          sm:pt-24
+          lg:pt-28
         "
       >
         <Container
@@ -85,8 +84,8 @@ export function ProblemSection() {
               absolute
               left-1/2
               top-1/2
-              h-[300px]
-              w-[300px]
+              h-[280px]
+              w-[280px]
               -translate-x-1/2
               -translate-y-1/2
               rounded-full
@@ -99,7 +98,6 @@ export function ProblemSection() {
             "
           />
 
-          {/* Main content */}
           <div
             className="
               relative
@@ -120,14 +118,8 @@ export function ProblemSection() {
             <motion.div
               initial={
                 reducedMotion
-                  ? {
-                      opacity: 1,
-                      y: 0,
-                    }
-                  : {
-                      opacity: 0,
-                      y: 30,
-                    }
+                  ? { opacity: 1, y: 0 }
+                  : { opacity: 0, y: 30 }
               }
               whileInView={{
                 opacity: 1,
@@ -135,7 +127,7 @@ export function ProblemSection() {
               }}
               viewport={{
                 once: true,
-                amount: 0.3,
+                amount: 0.2,
               }}
               transition={{
                 duration: reducedMotion ? 0 : 0.8,
@@ -180,14 +172,14 @@ export function ProblemSection() {
                   xl:text-7xl
                 "
               >
-                {problemContent.heading}
+                كل نقطة توقف... تعيق نمو العمل.
               </h2>
             </motion.div>
 
             {/* Counter */}
             <div
               className="
-                mb-6
+                mb-5
                 flex
                 items-center
                 gap-3
@@ -201,20 +193,13 @@ export function ProblemSection() {
                   text-sm
                   tracking-[0.2em]
                   text-brass
-                  sm:text-base
                 "
               >
                 {String(activeIndex + 1).padStart(2, '0')}
               </span>
 
               <span
-                aria-hidden="true"
-                className="
-                  h-px
-                  w-8
-                  bg-base-line
-                  sm:w-12
-                "
+                className="h-px w-8 bg-base-line sm:w-12"
               />
 
               <span
@@ -223,7 +208,6 @@ export function ProblemSection() {
                   text-sm
                   tracking-[0.2em]
                   text-ink/40
-                  sm:text-base
                 "
               >
                 {String(totalPoints).padStart(2, '0')}
@@ -235,19 +219,22 @@ export function ProblemSection() {
               className="
                 relative
                 flex
-                min-h-[110px]
+                min-h-[120px]
                 w-full
                 items-center
                 justify-center
                 overflow-hidden
                 px-5
-                sm:min-h-[150px]
+                sm:min-h-[160px]
                 sm:px-8
-                md:min-h-[180px]
-                lg:min-h-[220px]
+                md:min-h-[200px]
+                lg:min-h-[230px]
               "
             >
-              <AnimatePresence mode="wait">
+              <AnimatePresence
+                mode="wait"
+                initial={false}
+              >
                 <motion.div
                   key={activeIndex}
                   initial={
@@ -255,8 +242,6 @@ export function ProblemSection() {
                       ? {
                           opacity: 1,
                           y: 0,
-                          filter: 'blur(0px)',
-                          scale: 1,
                         }
                       : {
                           opacity: 0,
@@ -278,20 +263,19 @@ export function ProblemSection() {
                         }
                       : {
                           opacity: 0,
-                          y: -30,
+                          y: -25,
                           filter: 'blur(8px)',
                           scale: 1.02,
                         }
                   }
                   transition={{
-                    duration: reducedMotion ? 0 : 0.55,
+                    duration: reducedMotion ? 0 : 0.5,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className="
                     absolute
-                    inset-x-0
+                    inset-0
                     flex
-                    w-full
                     items-center
                     justify-center
                   "
@@ -299,6 +283,7 @@ export function ProblemSection() {
                   <p
                     className="
                       max-w-3xl
+                      px-2
                       font-display
                       text-2xl
                       font-semibold
@@ -329,7 +314,6 @@ export function ProblemSection() {
                 px-4
                 sm:mt-10
                 sm:max-w-md
-                sm:gap-4
               "
             >
               <div
@@ -348,12 +332,11 @@ export function ProblemSection() {
                   "
                   animate={{
                     scaleX:
-                      totalPoints <= 1
-                        ? 1
-                        : (activeIndex + 1) / totalPoints,
+                      (activeIndex + 1) /
+                      totalPoints,
                   }}
                   transition={{
-                    duration: reducedMotion ? 0 : 0.35,
+                    duration: reducedMotion ? 0 : 0.3,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 />
@@ -370,9 +353,41 @@ export function ProblemSection() {
                 مرّر للاستمرار
               </span>
             </div>
+
+            {/* Mobile scroll hint */}
+            <div
+              className="
+                mt-5
+                flex
+                items-center
+                gap-2
+                text-[10px]
+                text-ink/30
+                sm:hidden
+              "
+            >
+              <span>اسحب للأعلى</span>
+
+              <motion.span
+                animate={
+                  reducedMotion
+                    ? undefined
+                    : {
+                        y: [0, 5, 0],
+                      }
+                }
+                transition={{
+                  duration: 1.4,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              >
+                ↓
+              </motion.span>
+            </div>
           </div>
 
-          {/* Desktop side indicator */}
+          {/* Desktop indicator */}
           <div
             className="
               absolute
@@ -387,25 +402,33 @@ export function ProblemSection() {
               lg:right-8
             "
           >
-            {problemContent.points.map((point, index) => (
-              <motion.span
-                key={point}
-                animate={{
-                  width: index === activeIndex ? 20 : 5,
-                  opacity:
-                    index === activeIndex ? 1 : 0.2,
-                }}
-                transition={{
-                  duration: reducedMotion ? 0 : 0.25,
-                }}
-                className="
-                  block
-                  h-1
-                  rounded-full
-                  bg-brass
-                "
-              />
-            ))}
+            {problemContent.points.map(
+              (point, index) => (
+                <motion.span
+                  key={point}
+                  animate={{
+                    width:
+                      index === activeIndex
+                        ? 20
+                        : 5,
+                    opacity:
+                      index === activeIndex
+                        ? 1
+                        : 0.2,
+                  }}
+                  transition={{
+                    duration:
+                      reducedMotion ? 0 : 0.25,
+                  }}
+                  className="
+                    block
+                    h-1
+                    rounded-full
+                    bg-brass
+                  "
+                />
+              ),
+            )}
           </div>
         </Container>
       </div>

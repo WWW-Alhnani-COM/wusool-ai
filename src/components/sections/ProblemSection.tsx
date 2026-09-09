@@ -25,9 +25,8 @@ export function ProblemSection() {
   });
 
   /*
-   * مهم:
-   * لا نربط تغيير النص بـ reducedMotion.
-   * حتى على الهاتف يجب أن يتغير النص مع التمرير.
+   * تغيير النص يبقى مرتبطًا بالتمرير
+   * حتى عند تفعيل reduced motion.
    */
   useMotionValueEvent(scrollYProgress, 'change', (latest) => {
     const total = problemContent.points.length;

@@ -19,7 +19,7 @@ export const heroStages: HeroStage[] = [
     startFrame: 1,
     endFrame: 5,
     label: "جذع",
-    headline: "جِذع… أساس تتفرع منه الحلول.",
+    headline: "جِذع أساس تتفرع منه الحلول",
     subheadline:
       "من جِذع يبدأ بناء منظومة عملك، ومن أساسه تبدأ كل الفروع",
   },

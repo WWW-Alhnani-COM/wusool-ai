@@ -729,7 +729,7 @@ function HeroContent({
         mx-auto
         flex
         flex-col
-        items-stretch
+        items-center
         text-center
         py-32
       "
@@ -932,11 +932,11 @@ function HeroContent({
           mt-8
           flex
           flex-col
-          items-end
+          items-center
+          justify-center
           gap-4
           sm:flex-row
-          sm:items-center
-          sm:justify-end
+          sm:justify-center
         "
       >
         <Button to="/طلب-استشارة">

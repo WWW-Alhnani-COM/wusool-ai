@@ -279,69 +279,6 @@ export function ServicesGrid() {
             </motion.div>
           ))}
         </div>
-
-        {/* Bottom statement */}
-        <motion.div
-          initial={
-            reducedMotion
-              ? { opacity: 1, y: 0 }
-              : { opacity: 0, y: 20 }
-          }
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
-          viewport={{
-            once: true,
-            amount: 0.2,
-          }}
-          transition={{
-            duration: reducedMotion ? 0 : 0.7,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="
-            mt-14
-            flex
-            items-center
-            justify-between
-            gap-6
-            border-t
-            border-base-line
-            pt-6
-            sm:mt-20
-            sm:pt-8
-          "
-        >
-          <span
-            className="
-              text-xs
-              tracking-[0.18em]
-              text-ink-faint
-              sm:text-sm
-            "
-          >
-            منظومة واحدة
-          </span>
-
-          <span
-            aria-hidden="true"
-            className="
-              h-px
-              flex-1
-              bg-base-line
-            "
-          />
-
-          <span
-            className="
-              text-xs
-              text-ink-faint
-              sm:text-sm
-            "
-          >
-            09 حلول
-          </span>
-        </motion.div>
       </Container>
     </section>
   );

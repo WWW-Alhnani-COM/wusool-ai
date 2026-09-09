@@ -25,10 +25,10 @@
    ============================================================ */
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-    background: #0b0c0f;
-  }
+html {
+  scroll-behavior: smooth;
+  background: #ffffff;
+}
 
   @media (prefers-reduced-motion: reduce) {
     html {
@@ -107,30 +107,29 @@
    * Premium glass surface.
    */
 
-  .glass-surface {
-    background:
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.075),
-        rgba(255, 255, 255, 0.025)
-      );
+.glass-surface {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(247, 247, 245, 0.82)
+    );
 
-    border: 1px solid
-      rgba(255, 255, 255, 0.10);
+  border: 1px solid
+    rgba(23, 23, 23, 0.08);
 
-    box-shadow:
-      0 18px 60px
-        rgba(0, 0, 0, 0.24);
+  box-shadow:
+    0 18px 60px
+      rgba(23, 23, 23, 0.08);
 
-    backdrop-filter:
-      blur(24px)
-      saturate(140%);
+  backdrop-filter:
+    blur(24px)
+    saturate(140%);
 
-    -webkit-backdrop-filter:
-      blur(24px)
-      saturate(140%);
-  }
-
+  -webkit-backdrop-filter:
+    blur(24px)
+    saturate(140%);
+}
   /*
    * Text rendering for large cinematic
    * Arabic headings.

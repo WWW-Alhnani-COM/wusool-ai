@@ -1,3 +1,4 @@
+```tsx
 import { AnimatePresence, motion } from "framer-motion";
 import {
   useCallback,
@@ -509,7 +510,7 @@ export function Hero() {
           min-h-screen
           w-full
           overflow-hidden
-          bg-black
+          bg-base
         "
         aria-label="جِذع AI"
       >
@@ -559,7 +560,7 @@ export function Hero() {
       className="
         relative
         w-full
-        bg-black
+        bg-base
       "
       style={{
         height: `${scrollLength}vh`,
@@ -573,7 +574,7 @@ export function Hero() {
           h-screen
           w-full
           overflow-hidden
-          bg-black
+          bg-base
         "
       >
         {/* ====================================================
@@ -586,7 +587,7 @@ export function Hero() {
             inset-0
             h-full
             w-full
-            bg-black
+            bg-base
           "
         >
           <canvas
@@ -695,7 +696,7 @@ export function Hero() {
               z-20
               hidden
               text-xs
-              text-white/40
+              text-ink/40
               sm:block
               font-english
             "
@@ -834,12 +835,12 @@ function HeroContent({
           leading-[1.08]
           tracking-tight
           text-center
-          text-white
+          text-ink
           sm:text-5xl
           lg:text-7xl
           max-w-4xl
           mx-auto
-          drop-shadow-[0_5px_30px_rgba(0,0,0,0.55)]
+          drop-shadow-[0_5px_30px_rgba(23,23,23,0.12)]
         "
       >
         {stage.headline}
@@ -889,10 +890,10 @@ function HeroContent({
           text-center
           text-lg
           leading-relaxed
-          text-white/82
+          text-ink/70
           sm:text-xl
           lg:text-2xl
-          drop-shadow-[0_3px_18px_rgba(0,0,0,0.5)]
+          drop-shadow-[0_3px_18px_rgba(23,23,23,0.10)]
         "
       >
         {stage.subheadline}
@@ -967,7 +968,7 @@ function HeroOverlays() {
           absolute
           inset-0
           z-[2]
-          bg-black/25
+          bg-white/10
         "
       />
 
@@ -978,8 +979,8 @@ function HeroOverlays() {
           inset-0
           z-[3]
           bg-gradient-to-l
-          from-black/90
-          via-black/45
+          from-white/70
+          via-white/25
           to-transparent
         "
       />
@@ -993,8 +994,8 @@ function HeroOverlays() {
           z-[3]
           h-64
           bg-gradient-to-t
-          from-black/90
-          via-black/35
+          from-white/80
+          via-white/25
           to-transparent
         "
       />
@@ -1008,7 +1009,7 @@ function HeroOverlays() {
           z-[3]
           h-40
           bg-gradient-to-b
-          from-black/55
+          from-white/65
           to-transparent
         "
       />
@@ -1074,9 +1075,10 @@ function HeroOverlays() {
           absolute
           inset-0
           z-[4]
-          bg-[radial-gradient(circle_at_center,transparent_35%,rgba(0,0,0,0.38)_100%)]
+          bg-[radial-gradient(circle_at_center,transparent_40%,rgba(255,255,255,0.28)_100%)]
         "
       />
     </>
   );
 }
+```

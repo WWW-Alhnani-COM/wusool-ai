@@ -42,7 +42,6 @@ export function ProblemSection() {
     );
   });
 
-  const totalPoints = problemContent.points.length;
   const currentPoint = problemContent.points[activeIndex];
 
   return (
@@ -137,9 +136,12 @@ export function ProblemSection() {
                 mb-10
                 w-full
                 max-w-4xl
+                translate-y-4
                 px-4
                 sm:mb-14
+                sm:translate-y-5
                 lg:mb-16
+                lg:translate-y-6
               "
             >
               <span
@@ -169,50 +171,12 @@ export function ProblemSection() {
                   sm:text-4xl
                   md:text-5xl
                   lg:text-6xl
-                  xl:text-7xl
+                  xl:text-6xl
                 "
               >
                 كل نقطة توقف... تعيق نمو العمل.
               </h2>
             </motion.div>
-
-            {/* Counter */}
-            <div
-              className="
-                mb-5
-                flex
-                items-center
-                gap-3
-                sm:mb-8
-                sm:gap-4
-              "
-            >
-              <span
-                className="
-                  font-mono
-                  text-sm
-                  tracking-[0.2em]
-                  text-brass
-                "
-              >
-                {String(activeIndex + 1).padStart(2, '0')}
-              </span>
-
-              <span
-                className="h-px w-8 bg-base-line sm:w-12"
-              />
-
-              <span
-                className="
-                  font-mono
-                  text-sm
-                  tracking-[0.2em]
-                  text-ink/40
-                "
-              >
-                {String(totalPoints).padStart(2, '0')}
-              </span>
-            </div>
 
             {/* Current point */}
             <div
@@ -300,135 +264,6 @@ export function ProblemSection() {
                 </motion.div>
               </AnimatePresence>
             </div>
-
-            {/* Progress */}
-            <div
-              className="
-                mt-8
-                flex
-                w-full
-                max-w-xs
-                flex-col
-                items-center
-                gap-3
-                px-4
-                sm:mt-10
-                sm:max-w-md
-              "
-            >
-              <div
-                className="
-                  h-px
-                  w-full
-                  overflow-hidden
-                  bg-base-line
-                "
-              >
-                <motion.div
-                  className="
-                    h-full
-                    origin-right
-                    bg-brass
-                  "
-                  animate={{
-                    scaleX:
-                      (activeIndex + 1) /
-                      totalPoints,
-                  }}
-                  transition={{
-                    duration: reducedMotion ? 0 : 0.3,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                />
-              </div>
-
-              <span
-                className="
-                  text-[10px]
-                  tracking-[0.2em]
-                  text-ink/40
-                  sm:text-xs
-                "
-              >
-                مرّر للاستمرار
-              </span>
-            </div>
-
-            {/* Mobile scroll hint */}
-            <div
-              className="
-                mt-5
-                flex
-                items-center
-                gap-2
-                text-[10px]
-                text-ink/30
-                sm:hidden
-              "
-            >
-              <span>اسحب للأعلى</span>
-
-              <motion.span
-                animate={
-                  reducedMotion
-                    ? undefined
-                    : {
-                        y: [0, 5, 0],
-                      }
-                }
-                transition={{
-                  duration: 1.4,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              >
-                ↓
-              </motion.span>
-            </div>
-          </div>
-
-          {/* Desktop indicator */}
-          <div
-            className="
-              absolute
-              right-3
-              top-1/2
-              hidden
-              -translate-y-1/2
-              flex-col
-              gap-2
-              md:right-5
-              md:flex
-              lg:right-8
-            "
-          >
-            {problemContent.points.map(
-              (point, index) => (
-                <motion.span
-                  key={point}
-                  animate={{
-                    width:
-                      index === activeIndex
-                        ? 20
-                        : 5,
-                    opacity:
-                      index === activeIndex
-                        ? 1
-                        : 0.2,
-                  }}
-                  transition={{
-                    duration:
-                      reducedMotion ? 0 : 0.25,
-                  }}
-                  className="
-                    block
-                    h-1
-                    rounded-full
-                    bg-brass
-                  "
-                />
-              ),
-            )}
           </div>
         </Container>
       </div>

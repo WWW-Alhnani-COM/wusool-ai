@@ -725,13 +725,12 @@ function HeroContent({
     <div
       className="
         w-full
+        max-w-4xl
+        mx-auto
         flex
         flex-col
-        items-end
-        text-right
-        max-w-4xl
-        mr-0
-        ml-auto
+        items-stretch
+        text-center
         py-32
       "
     >
@@ -762,7 +761,9 @@ function HeroContent({
           mb-5
           flex
           items-center
+          justify-center
           gap-3
+          text-center
           text-sm
           font-medium
           text-brass
@@ -779,6 +780,14 @@ function HeroContent({
         <span>
           {stage.label}
         </span>
+
+        <span
+          className="
+            h-px
+            w-10
+            bg-brass/70
+          "
+        />
       </motion.div>
 
       {/* ======================================================
@@ -818,15 +827,18 @@ function HeroContent({
           ],
         }}
         className="
+          w-full
           font-display
           font-bold
           text-4xl
           leading-[1.08]
           tracking-tight
+          text-center
           text-white
           sm:text-5xl
           lg:text-7xl
           max-w-4xl
+          mx-auto
           drop-shadow-[0_5px_30px_rgba(0,0,0,0.55)]
         "
       >
@@ -871,7 +883,10 @@ function HeroContent({
         }}
         className="
           mt-6
+          w-full
           max-w-2xl
+          mx-auto
+          text-center
           text-lg
           leading-relaxed
           text-white/82
@@ -917,10 +932,11 @@ function HeroContent({
           mt-8
           flex
           flex-col
-          items-stretch
+          items-end
           gap-4
           sm:flex-row
           sm:items-center
+          sm:justify-end
         "
       >
         <Button to="/طلب-استشارة">

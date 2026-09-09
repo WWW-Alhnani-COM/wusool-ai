@@ -49,7 +49,7 @@ export function ProblemSection() {
     <section
       ref={sectionRef}
       dir="rtl"
-      className="relative h-[100vh] bg-base"
+      className="relative h-[300vh] bg-base"
     >
       <div
         className="

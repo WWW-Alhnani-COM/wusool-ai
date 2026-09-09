@@ -1,4 +1,3 @@
-```tsx
 import { motion } from "framer-motion";
 import { processSteps } from "@/data/process";
 import { Container } from "@/components/ui/Container";
@@ -61,4 +60,3 @@ export function ProcessTimeline() {
     </section>
   );
 }
-```

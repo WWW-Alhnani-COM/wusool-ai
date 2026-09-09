@@ -1,4 +1,3 @@
-```tsx
 import { AnimatePresence, motion } from "framer-motion";
 import {
   useCallback,
@@ -1081,4 +1080,3 @@ function HeroOverlays() {
     </>
   );
 }
-```

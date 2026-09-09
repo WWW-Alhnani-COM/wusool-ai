@@ -13,15 +13,12 @@ export function ProcessTimeline() {
       id="how-we-work"
     >
       <Container className="flex flex-col gap-14">
-        {/* Section Heading */}
-        <div className="w-full text-center">
-          <SectionHeading
-            heading="كيف نعمل"
-            description="من أول تواصل معنا، إلى نظام يعمل فعليًا."
-          />
-        </div>
+        <SectionHeading
+          heading="كيف نعمل"
+          description="من أول تواصل معنا، إلى نظام يعمل فعليًا."
+          align="center"
+        />
 
-        {/* Process Steps */}
         <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-base-line rounded-2xl overflow-hidden">
           {processSteps.map((step, i) => (
             <motion.li

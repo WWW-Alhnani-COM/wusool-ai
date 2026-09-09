@@ -53,15 +53,16 @@ export function Header() {
     setOpen(false);
 
   return (
-    <header
-      className="
-        fixed
-        inset-x-0
-        top-0
-        z-[100]
-        pointer-events-none
-      "
-    >
+<header
+  className="
+    sticky
+    lg:fixed
+    inset-x-0
+    top-0
+    z-[100]
+    pointer-events-none
+  "
+>
       <div
         className={`
           container-page

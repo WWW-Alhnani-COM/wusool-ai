@@ -23,10 +23,10 @@ export function Footer() {
           links={services.slice(0, 6).map((s) => ({ label: s.title, to: `/الحلول#${s.slug}` }))}
         />
 
-        <FooterCol
+        {/* <FooterCol
           title="القطاعات"
           links={sectors.slice(0, 6).map((s) => ({ label: s.title, to: `/القطاعات#${s.slug}` }))}
-        />
+        /> */}
       </div>
 
       <div className="border-t border-base-line">

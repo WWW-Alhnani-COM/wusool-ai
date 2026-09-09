@@ -16,7 +16,6 @@ export function HomePage() {
       <SolutionPath />
       <ScrollSequence />
       <ServicesGrid />
-      <SectorsShowcase />
       <ProcessTimeline />
       <ValueSection />
       <FinalCTA />

@@ -1,7 +1,6 @@
 import { Hero } from "@/components/hero/Hero";
 import { ScrollSequence } from "@/components/hero/ScrollSequence";
 import { ProblemSection } from "@/components/sections/ProblemSection";
-import { SolutionPath } from "@/components/sections/SolutionPath";
 import { ServicesGrid } from "@/components/sections/ServicesGrid";
 import { ProcessTimeline } from "@/components/sections/ProcessTimeline";
 import { ValueSection } from "@/components/sections/ValueSection";
@@ -12,7 +11,6 @@ export function HomePage() {
     <>
       <Hero />
       <ProblemSection />
-      <SolutionPath />
       <ScrollSequence />
       <ServicesGrid />
       <ProcessTimeline />

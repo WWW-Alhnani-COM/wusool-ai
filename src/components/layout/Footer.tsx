@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { siteNav } from "@/data/content";
 import { services } from "@/data/services";
-import { sectors } from "@/data/sectors";
 
 export function Footer() {
   return (

@@ -1,3 +1,4 @@
+```tsx
 import {
   useEffect,
   useState,
@@ -53,18 +54,18 @@ export function Header() {
     setOpen(false);
 
   return (
-<header
-  className="
-    sticky
-    lg:fixed
-    inset-x-0
-    top-0
-    z-[100]
-    pointer-events-none
-  "
->
+    <header
+      className="
+        sticky
+        lg:fixed
+        inset-x-0
+        top-0
+        z-[100]
+        pointer-events-none
+      "
+    >
       <div
-        className={`
+        className="
           container-page
           section-px
           pointer-events-auto
@@ -72,7 +73,7 @@ export function Header() {
           sm:pt-5
           transition-all
           duration-500
-        `}
+        "
       >
         <div
           className={`
@@ -86,17 +87,19 @@ export function Header() {
             sm:px-6
             transition-all
             duration-500
+
             ${
               scrolled
                 ? `
-                  border-white/[0.13]
-                  bg-black/[0.72]
-                  shadow-[0_18px_60px_rgba(0,0,0,0.28)]
+                  border-ink/10
+                  bg-white/90
+                  shadow-[0_18px_60px_rgba(23,23,23,0.08)]
                   backdrop-blur-2xl
                 `
                 : `
-                  border-white/[0.08]
-                  bg-black/[0.28]
+                  border-ink/10
+                  bg-white/70
+                  shadow-[0_10px_40px_rgba(23,23,23,0.04)]
                   backdrop-blur-xl
                 `
             }
@@ -115,7 +118,7 @@ export function Header() {
             onClick={closeMenu}
             className="
               shrink-0
-              text-white
+              text-ink
               transition-opacity
               duration-300
               hover:opacity-80
@@ -185,7 +188,7 @@ export function Header() {
                       ${
                         isActive
                           ? "text-brass"
-                          : "text-white/65 hover:text-white"
+                          : "text-ink/65 hover:text-ink"
                       }
                     `
                   }
@@ -244,12 +247,12 @@ export function Header() {
               lg:hidden
               rounded-xl
               border
-              border-white/10
-              bg-white/[0.04]
+              border-ink/10
+              bg-ink/[0.03]
               p-2.5
-              text-white
+              text-ink
               transition
-              hover:bg-white/[0.08]
+              hover:bg-ink/[0.06]
             "
             aria-label={
               open
@@ -346,10 +349,10 @@ export function Header() {
             className="
               rounded-[20px]
               border
-              border-white/[0.10]
-              bg-black/[0.78]
+              border-ink/10
+              bg-white/95
               p-3
-              shadow-[0_18px_60px_rgba(0,0,0,0.32)]
+              shadow-[0_18px_60px_rgba(23,23,23,0.10)]
               backdrop-blur-2xl
             "
             aria-label="القائمة"
@@ -379,8 +382,8 @@ export function Header() {
                       duration-300
                       ${
                         isActive
-                          ? "bg-white/[0.06] text-brass"
-                          : "text-white/75 hover:bg-white/[0.04] hover:text-white"
+                          ? "bg-ink/[0.04] text-brass"
+                          : "text-ink/75 hover:bg-ink/[0.03] hover:text-ink"
                       }
                     `
                   }
@@ -394,7 +397,7 @@ export function Header() {
               className="
                 mt-2
                 border-t
-                border-white/[0.08]
+                border-ink/10
                 pt-3
               "
             >
@@ -417,3 +420,4 @@ export function Header() {
     </header>
   );
 }
+```

@@ -1,4 +1,8 @@
-import { AnimatePresence, motion } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+} from "framer-motion";
+
 import {
   useCallback,
   useEffect,
@@ -13,7 +17,6 @@ import {
   type HeroStage,
 } from "@/data/content";
 
-import { sequenceFrames } from "@/data/process";
 import { Button } from "@/components/ui/Button";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useIsLowPowerDevice } from "@/hooks/useIsLowPowerDevice";
@@ -23,11 +26,60 @@ import { useScrollProgress } from "@/hooks/useScrollProgress";
 // CONFIGURATION
 // ============================================================
 
-const HERO_SCROLL_LENGTH_VH = 500;
-const HERO_SCROLL_LENGTH_VH_MOBILE = 420;
+const HERO_SCROLL_LENGTH_VH =
+  560;
 
-const TEXT_EXIT_DURATION = 0.28;
-const TEXT_ENTER_DURATION = 0.55;
+const HERO_SCROLL_LENGTH_VH_MOBILE =
+  480;
+
+// ------------------------------------------------------------
+// Cinematic motion
+// ------------------------------------------------------------
+
+const AUTO_PLAY_SPEED =
+  0.018;
+
+const SCRUB_EASE =
+  0.045;
+
+const VIDEO_TIME_EASE =
+  0.085;
+
+const ZOOM_AMOUNT =
+  0.095;
+
+// Last percentage of each scene used for crossfade.
+const SCENE_CROSSFADE =
+  0.12;
+
+// Scroll gesture multiplier.
+// Higher = scroll moves cinematic timeline faster.
+const SCROLL_GESTURE_GAIN =
+  1.15;
+
+// Delay before considering scrolling stopped.
+const SCROLL_STOP_DELAY =
+  120;
+
+// Minimum movement required before
+// considering a gesture an actual scroll.
+const SCROLL_EPSILON =
+  0.00005;
+
+// ============================================================
+// TYPES
+// ============================================================
+
+type SceneAsset = {
+  id: string;
+  src: string;
+};
+
+type VideoLayerState = {
+  index: number;
+  opacity: number;
+  scale: number;
+};
 
 // ============================================================
 // HELPERS
@@ -44,6 +96,18 @@ function clamp(
   );
 }
 
+function lerp(
+  current: number,
+  target: number,
+  amount: number,
+) {
+  return (
+    current +
+    (target - current) *
+      amount
+  );
+}
+
 function getStageForFrame(
   frame: number,
   stages: HeroStage[],
@@ -51,77 +115,276 @@ function getStageForFrame(
   return (
     stages.find(
       (stage) =>
-        frame >= stage.startFrame &&
-        frame <= stage.endFrame,
+        frame >=
+          stage.startFrame &&
+        frame <=
+          stage.endFrame,
     ) ?? stages[0]
   );
 }
+
+function getSceneLocalProgress(
+  timelineProgress: number,
+  sceneIndex: number,
+  sceneCount: number,
+) {
+  if (sceneCount <= 0) {
+    return 0;
+  }
+
+  const sceneStart =
+    sceneIndex /
+    sceneCount;
+
+  const sceneEnd =
+    (sceneIndex + 1) /
+    sceneCount;
+
+  return clamp(
+    (timelineProgress -
+      sceneStart) /
+      (sceneEnd -
+        sceneStart),
+    0,
+    1,
+  );
+}
+
+function getSceneIndex(
+  timelineProgress: number,
+  sceneCount: number,
+) {
+  if (sceneCount <= 1) {
+    return 0;
+  }
+
+  return Math.min(
+    sceneCount - 1,
+    Math.floor(
+      clamp(
+        timelineProgress,
+        0,
+        0.999999,
+      ) *
+        sceneCount,
+    ),
+  );
+}
+
+function getSceneProgress(
+  timelineProgress: number,
+  sceneCount: number,
+) {
+  const sceneIndex =
+    getSceneIndex(
+      timelineProgress,
+      sceneCount,
+    );
+
+  return {
+    sceneIndex,
+    sceneProgress:
+      getSceneLocalProgress(
+        timelineProgress,
+        sceneIndex,
+        sceneCount,
+      ),
+  };
+}
+
+// ============================================================
+// VIDEO ASSETS
+// ============================================================
+
+const videoModules =
+  import.meta.glob(
+    "/src/assets/public/videos/scene-*.mp4",
+    {
+      eager: true,
+      query: "?url",
+      import: "default",
+    },
+  ) as Record<
+    string,
+    string
+  >;
+
+const sceneAssets: SceneAsset[] =
+  Object.entries(
+    videoModules,
+  )
+    .sort(([a], [b]) =>
+      a.localeCompare(b),
+    )
+    .map(
+      ([path, src]) => ({
+        id:
+          path
+            .split("/")
+            .pop()
+            ?.replace(
+              ".mp4",
+              "",
+            ) ??
+          path,
+        src,
+      }),
+    );
 
 // ============================================================
 // HERO
 // ============================================================
 
 export function Hero() {
-  const reducedMotion = useReducedMotion();
-  const lowPower = useIsLowPowerDevice();
+  const reducedMotion =
+    useReducedMotion();
+
+  const lowPower =
+    useIsLowPowerDevice();
 
   const {
     ref,
     progress,
-  } = useScrollProgress<HTMLDivElement>();
-
-  const frames = sequenceFrames;
-  const frameCount = frames.length;
-
-  // ==========================================================
-  // REFS
-  // ==========================================================
-
-  const canvasRef =
-    useRef<HTMLCanvasElement | null>(null);
-
-  const imagesRef =
-    useRef<HTMLImageElement[]>([]);
-
-  const contextRef =
-    useRef<CanvasRenderingContext2D | null>(null);
-
-  const animationFrameRef =
-    useRef<number | null>(null);
-
-  const resizeObserverRef =
-    useRef<ResizeObserver | null>(null);
-
-  const lastFrameRef =
-    useRef(-1);
+  } =
+    useScrollProgress<HTMLDivElement>();
 
   // ==========================================================
   // STATE
   // ==========================================================
 
-  const [preloaded, setPreloaded] =
-    useState(false);
+  const [
+    isMobile,
+    setIsMobile,
+  ] = useState(false);
 
-  const [isMobile, setIsMobile] =
-    useState(false);
+  const [
+    videosReady,
+    setVideosReady,
+  ] = useState(false);
+
+  const [
+    activeScene,
+    setActiveScene,
+  ] = useState(0);
+
+  const [
+    activeStageFrame,
+    setActiveStageFrame,
+  ] = useState(1);
 
   // ==========================================================
-  // RESPONSIVE DETECTION
+  // VIDEO REFS
+  // ==========================================================
+
+  const videoRefs =
+    useRef<
+      HTMLVideoElement[]
+    >([]);
+
+  // ==========================================================
+  // CINEMATIC REFS
+  // ==========================================================
+
+  /**
+   * Current cinematic position.
+   *
+   * This is NOT directly equal to scroll progress.
+   */
+  const smoothProgressRef =
+    useRef(0);
+
+  /**
+   * Desired cinematic position.
+   */
+  const targetProgressRef =
+    useRef(0);
+
+  /**
+   * Last page scroll progress.
+   */
+  const previousScrollProgressRef =
+    useRef(0);
+
+  /**
+   * Progress when the current
+   * scroll gesture started.
+   */
+  const scrollAnchorProgressRef =
+    useRef(0);
+
+  /**
+   * Cinematic position when the
+   * current scroll gesture started.
+   */
+  const virtualAnchorProgressRef =
+    useRef(0);
+
+  /**
+   * Whether the user is currently
+   * interacting with scroll.
+   */
+  const isScrollingRef =
+    useRef(false);
+
+  /**
+   * Last scroll event timestamp.
+   */
+  const lastScrollTimeRef =
+    useRef(0);
+
+  /**
+   * RAF.
+   */
+  const animationFrameRef =
+    useRef<number | null>(null);
+
+  /**
+   * Timeout used to detect
+   * scroll stop.
+   */
+  const scrollStopTimerRef =
+    useRef<number | null>(null);
+
+  /**
+   * Prevent duplicate scroll
+   * initialization.
+   */
+  const scrollInitializedRef =
+    useRef(false);
+
+  /**
+   * Prevent excessive React state updates.
+   */
+  const lastStageRef =
+    useRef(-1);
+
+  /**
+   * Last active scene.
+   */
+  const lastSceneRef =
+    useRef(0);
+
+  // ==========================================================
+  // RESPONSIVE
   // ==========================================================
 
   useEffect(() => {
-    const updateViewport = () => {
-      setIsMobile(
-        window.innerWidth < 768,
-      );
-    };
+    const updateViewport =
+      () => {
+        setIsMobile(
+          window.innerWidth <
+            768,
+        );
+      };
 
     updateViewport();
 
     window.addEventListener(
       "resize",
       updateViewport,
-      { passive: true },
+      {
+        passive: true,
+      },
     );
 
     return () => {
@@ -133,396 +396,721 @@ export function Hero() {
   }, []);
 
   // ==========================================================
-  // FRAME CALCULATION
+  // VIDEO ELEMENT MANAGEMENT
   // ==========================================================
 
-  const safeProgress = clamp(
-    progress,
-    0,
-    1,
-  );
+  const setVideoRef =
+    useCallback(
+      (
+        index: number,
+        element:
+          | HTMLVideoElement
+          | null,
+      ) => {
+        if (!element) {
+          return;
+        }
 
-  const activeIndex =
-    frameCount > 0
-      ? Math.min(
-          frameCount - 1,
-          Math.round(
-            safeProgress *
-              (frameCount - 1),
-          ),
-        )
-      : 0;
-
-  const activeFrame =
-    activeIndex + 1;
-
-  const activeStage = useMemo(
-    () =>
-      getStageForFrame(
-        activeFrame,
-        heroStages,
-      ),
-    [activeFrame],
-  );
+        videoRefs.current[
+          index
+        ] = element;
+      },
+      [],
+    );
 
   // ==========================================================
-  // PRELOAD ALL FRAMES
+  // VIDEO PRELOADING
   // ==========================================================
 
   useEffect(() => {
-    if (frameCount === 0) {
+    if (
+      sceneAssets.length ===
+      0
+    ) {
       return;
     }
 
     let cancelled = false;
 
-    setPreloaded(false);
+    const prepareVideos =
+      async () => {
+        const videos =
+          videoRefs.current;
 
-    const preloadImages = async () => {
-      const results =
-        await Promise.all(
-          frames.map(
-            async (frame) => {
-              const image =
-                new Image();
+        const preloadPromises =
+          sceneAssets.map(
+            async (
+              _scene,
+              index,
+            ) => {
+              const video =
+                videos[index];
 
-              image.decoding =
-                "async";
-
-              image.loading =
-                "eager";
-
-              image.src =
-                frame.src;
-
-              try {
-                await image.decode();
-              } catch {
-                await new Promise<void>(
-                  (resolve) => {
-                    if (
-                      image.complete
-                    ) {
-                      resolve();
-                      return;
-                    }
-
-                    image.onload =
-                      () => resolve();
-
-                    image.onerror =
-                      () => resolve();
-                  },
-                );
+              if (!video) {
+                return;
               }
 
-              return image;
+              video.muted = true;
+
+              video.playsInline =
+                true;
+
+              video.preload =
+                "auto";
+
+              video.load();
+
+              if (
+                typeof video
+                  .readyState ===
+                "number" &&
+                video.readyState >=
+                  2
+              ) {
+                return;
+              }
+
+              await new Promise<void>(
+                (
+                  resolve,
+                ) => {
+                  const handleReady =
+                    () => {
+                      cleanup();
+
+                      resolve();
+                    };
+
+                  const handleError =
+                    () => {
+                      cleanup();
+
+                      resolve();
+                    };
+
+                  const cleanup =
+                    () => {
+                      video.removeEventListener(
+                        "loadeddata",
+                        handleReady,
+                      );
+
+                      video.removeEventListener(
+                        "canplay",
+                        handleReady,
+                      );
+
+                      video.removeEventListener(
+                        "error",
+                        handleError,
+                      );
+                    };
+
+                  video.addEventListener(
+                    "loadeddata",
+                    handleReady,
+                    {
+                      once: true,
+                    },
+                  );
+
+                  video.addEventListener(
+                    "canplay",
+                    handleReady,
+                    {
+                      once: true,
+                    },
+                  );
+
+                  video.addEventListener(
+                    "error",
+                    handleError,
+                    {
+                      once: true,
+                    },
+                  );
+                },
+              );
             },
-          ),
+          );
+
+        await Promise.all(
+          preloadPromises,
         );
 
-      if (cancelled) {
-        return;
-      }
+        if (!cancelled) {
+          setVideosReady(true);
+        }
+      };
 
-      imagesRef.current =
-        results;
-
-      setPreloaded(true);
-    };
-
-    preloadImages();
+    /**
+     * Give React one frame to mount
+     * all video elements before preload.
+     */
+    const timer =
+      window.setTimeout(
+        prepareVideos,
+        50,
+      );
 
     return () => {
       cancelled = true;
-      imagesRef.current = [];
+
+      window.clearTimeout(
+        timer,
+      );
     };
-  }, [frames, frameCount]);
+  }, []);
 
   // ==========================================================
-  // CANVAS RESIZE
+  // SCROLL GESTURE DETECTION
   // ==========================================================
 
-  const resizeCanvas =
-    useCallback(() => {
-      const canvas =
-        canvasRef.current;
+  useEffect(() => {
+    const handleScroll =
+      () => {
+        const nextProgress =
+          clamp(
+            progress,
+            0,
+            1,
+          );
 
-      if (!canvas) {
-        return;
-      }
-
-      const rect =
-        canvas.getBoundingClientRect();
-
-      const maxDpr =
-        lowPower
-          ? 1.5
-          : 2;
-
-      const dpr =
-        Math.min(
-          window.devicePixelRatio || 1,
-          maxDpr,
-        );
-
-      const width =
-        Math.max(
-          1,
-          Math.round(
-            rect.width * dpr,
-          ),
-        );
-
-      const height =
-        Math.max(
-          1,
-          Math.round(
-            rect.height * dpr,
-          ),
-        );
-
-      if (
-        canvas.width !== width ||
-        canvas.height !== height
-      ) {
-        canvas.width =
-          width;
-
-        canvas.height =
-          height;
-      }
-
-      const context =
-        contextRef.current;
-
-      if (context) {
-        context.setTransform(
-          1,
-          0,
-          0,
-          1,
-          0,
-          0,
-        );
-      }
-    }, [lowPower]);
-
-  // ==========================================================
-  // DRAW FRAME
-  // ==========================================================
-
-  const drawFrame =
-    useCallback(
-      (frameIndex: number) => {
-        const canvas =
-          canvasRef.current;
-
-        const image =
-          imagesRef.current[
-            frameIndex
-          ];
+        const previous =
+          previousScrollProgressRef.current;
 
         if (
-          !canvas ||
-          !image ||
-          !image.complete ||
-          !image.naturalWidth ||
-          !image.naturalHeight
+          !scrollInitializedRef.current
+        ) {
+          previousScrollProgressRef.current =
+            nextProgress;
+
+          scrollInitializedRef.current =
+            true;
+
+          return;
+        }
+
+        const delta =
+          nextProgress -
+          previous;
+
+        previousScrollProgressRef.current =
+          nextProgress;
+
+        if (
+          Math.abs(delta) <
+          SCROLL_EPSILON
         ) {
           return;
         }
 
-        resizeCanvas();
+        /**
+         * First real scroll event
+         * of this gesture.
+         *
+         * IMPORTANT:
+         *
+         * We anchor the virtual timeline
+         * at its CURRENT position.
+         *
+         * This prevents the video from
+         * jumping back to frame 1 just
+         * because the page progress is
+         * still near 0.
+         */
+        if (
+          !isScrollingRef.current
+        ) {
+          isScrollingRef.current =
+            true;
 
-        let context =
-          contextRef.current;
+          scrollAnchorProgressRef.current =
+            nextProgress;
 
-        if (!context) {
-          context =
-            canvas.getContext(
-              "2d",
-              {
-                alpha: false,
-                desynchronized: true,
-              },
-            );
-
-          if (!context) {
-            return;
-          }
-
-          contextRef.current =
-            context;
+          virtualAnchorProgressRef.current =
+            smoothProgressRef.current;
         }
 
-        const canvasWidth =
-          canvas.width;
+        const scrollDelta =
+          nextProgress -
+          scrollAnchorProgressRef.current;
 
-        const canvasHeight =
-          canvas.height;
+        const target =
+          virtualAnchorProgressRef.current +
+          scrollDelta *
+            SCROLL_GESTURE_GAIN;
 
-        const imageWidth =
-          image.naturalWidth;
-
-        const imageHeight =
-          image.naturalHeight;
-
-        // object-fit: cover
-        const scale =
-          Math.max(
-            canvasWidth /
-              imageWidth,
-            canvasHeight /
-              imageHeight,
+        targetProgressRef.current =
+          clamp(
+            target,
+            0,
+            1,
           );
 
-        const drawWidth =
-          imageWidth * scale;
-
-        const drawHeight =
-          imageHeight * scale;
-
-        const offsetX =
-          (canvasWidth -
-            drawWidth) /
-          2;
-
-        const offsetY =
-          (canvasHeight -
-            drawHeight) /
-          2;
-
-        context.setTransform(
-          1,
-          0,
-          0,
-          1,
-          0,
-          0,
-        );
-
-        context.drawImage(
-          image,
-          offsetX,
-          offsetY,
-          drawWidth,
-          drawHeight,
-        );
-
-        lastFrameRef.current =
-          frameIndex;
-      },
-      [resizeCanvas],
-    );
-
-  // ==========================================================
-  // INITIAL CANVAS
-  // ==========================================================
-
-  useEffect(() => {
-    if (!preloaded) {
-      return;
-    }
-
-    resizeCanvas();
-
-    drawFrame(
-      clamp(
-        activeIndex,
-        0,
-        frameCount - 1,
-      ),
-    );
-
-    const canvas =
-      canvasRef.current;
-
-    if (!canvas) {
-      return;
-    }
-
-    const resizeObserver =
-      new ResizeObserver(() => {
-        resizeCanvas();
-
-        const currentFrame =
-          lastFrameRef.current;
+        lastScrollTimeRef.current =
+          performance.now();
 
         if (
-          currentFrame >= 0
+          scrollStopTimerRef.current !==
+          null
         ) {
-          drawFrame(
-            currentFrame,
+          window.clearTimeout(
+            scrollStopTimerRef.current,
           );
         }
-      });
 
-    resizeObserver.observe(
-      canvas,
+        scrollStopTimerRef.current =
+          window.setTimeout(
+            () => {
+              isScrollingRef.current =
+                false;
+
+              /**
+               * When scrolling stops,
+               * autoplay resumes from
+               * the CURRENT cinematic position.
+               */
+              virtualAnchorProgressRef.current =
+                smoothProgressRef.current;
+
+              scrollAnchorProgressRef.current =
+                previousScrollProgressRef.current;
+
+              targetProgressRef.current =
+                smoothProgressRef.current;
+            },
+            SCROLL_STOP_DELAY,
+          );
+      };
+
+    /**
+     * We deliberately listen directly
+     * to window scroll instead of using
+     * React progress as the only trigger.
+     */
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true,
+      },
     );
 
-    resizeObserverRef.current =
-      resizeObserver;
-
     return () => {
-      resizeObserver.disconnect();
+      window.removeEventListener(
+        "scroll",
+        handleScroll,
+      );
 
-      resizeObserverRef.current =
-        null;
+      if (
+        scrollStopTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          scrollStopTimerRef.current,
+        );
+
+        scrollStopTimerRef.current =
+          null;
+      }
     };
-  }, [
-    preloaded,
-    resizeCanvas,
-    drawFrame,
-    activeIndex,
-    frameCount,
-  ]);
+  }, [progress]);
 
   // ==========================================================
-  // SCROLL → FRAME
+  // INITIAL SCROLL POSITION
+  // ==========================================================
+
+  useEffect(() => {
+    const initial =
+      clamp(
+        progress,
+        0,
+        1,
+      );
+
+    smoothProgressRef.current =
+      initial;
+
+    targetProgressRef.current =
+      initial;
+
+    previousScrollProgressRef.current =
+      initial;
+
+    scrollAnchorProgressRef.current =
+      initial;
+
+    virtualAnchorProgressRef.current =
+      initial;
+
+    scrollInitializedRef.current =
+      true;
+  }, []);
+
+  // ==========================================================
+  // VIDEO CONTROL
+  // ==========================================================
+
+  const updateVideo =
+    useCallback(
+      (
+        video: HTMLVideoElement,
+        desiredProgress: number,
+      ) => {
+        if (
+          !video ||
+          !Number.isFinite(
+            video.duration,
+          ) ||
+          video.duration <= 0
+        ) {
+          return;
+        }
+
+        const duration =
+          video.duration;
+
+        const desiredTime =
+          clamp(
+            desiredProgress,
+            0,
+            1,
+          ) *
+          duration;
+
+        const currentTime =
+          video.currentTime;
+
+        const nextTime =
+          lerp(
+            currentTime,
+            desiredTime,
+            VIDEO_TIME_EASE,
+          );
+
+        /**
+         * Avoid extremely tiny currentTime
+         * writes because they can cause
+         * unnecessary browser work.
+         */
+        if (
+          Math.abs(
+            nextTime -
+              currentTime,
+          ) > 0.004
+        ) {
+          try {
+            video.currentTime =
+              nextTime;
+          } catch {
+            // Ignore seek errors during
+            // metadata/loading transitions.
+          }
+        }
+      },
+      [],
+    );
+
+  // ==========================================================
+  // VIDEO PLAYBACK
+  // ==========================================================
+
+  const keepVideoPaused =
+    useCallback(
+      (
+        video: HTMLVideoElement,
+      ) => {
+        if (!video.paused) {
+          video.pause();
+        }
+      },
+      [],
+    );
+
+  // ==========================================================
+  // CINEMATIC RAF LOOP
   // ==========================================================
 
   useEffect(() => {
     if (
-      !preloaded ||
-      frameCount === 0
+      !videosReady ||
+      sceneAssets.length ===
+        0
     ) {
       return;
     }
 
-    if (
-      activeIndex ===
-      lastFrameRef.current
-    ) {
-      return;
-    }
+    let cancelled = false;
 
-    if (
-      animationFrameRef.current !==
-      null
-    ) {
-      cancelAnimationFrame(
-        animationFrameRef.current,
-      );
-    }
+    const render =
+      () => {
+        if (cancelled) {
+          return;
+        }
 
-    animationFrameRef.current =
-      requestAnimationFrame(() => {
-        drawFrame(
-          activeIndex,
-        );
+        // ----------------------------------------------------
+        // AUTOPLAY
+        // ----------------------------------------------------
+
+        if (
+          !isScrollingRef.current
+        ) {
+          const current =
+            smoothProgressRef.current;
+
+          const next =
+            clamp(
+              current +
+                AUTO_PLAY_SPEED /
+                  1000,
+              0,
+              1,
+            );
+
+          targetProgressRef.current =
+            next;
+        }
+
+        // ----------------------------------------------------
+        // SMOOTH TIMELINE
+        // ----------------------------------------------------
+
+        const current =
+          smoothProgressRef.current;
+
+        const target =
+          targetProgressRef.current;
+
+        let nextProgress =
+          lerp(
+            current,
+            target,
+            SCRUB_EASE,
+          );
+
+        /**
+         * If the difference becomes tiny,
+         * snap to target to avoid endless
+         * micro interpolation.
+         */
+        if (
+          Math.abs(
+            target -
+              nextProgress,
+          ) <
+          0.00002
+        ) {
+          nextProgress =
+            target;
+        }
+
+        smoothProgressRef.current =
+          nextProgress;
+
+        // ----------------------------------------------------
+        // SCENE
+        // ----------------------------------------------------
+
+        const sceneCount =
+          sceneAssets.length;
+
+        const {
+          sceneIndex,
+          sceneProgress,
+        } =
+          getSceneProgress(
+            nextProgress,
+            sceneCount,
+          );
+
+        // ----------------------------------------------------
+        // ACTIVE SCENE
+        // ----------------------------------------------------
+
+        if (
+          sceneIndex !==
+          lastSceneRef.current
+        ) {
+          lastSceneRef.current =
+            sceneIndex;
+
+          setActiveScene(
+            sceneIndex,
+          );
+        }
+
+        // ----------------------------------------------------
+        // VIDEO
+        // ----------------------------------------------------
+
+        const currentVideo =
+          videoRefs.current[
+            sceneIndex
+          ];
+
+        if (currentVideo) {
+          keepVideoPaused(
+            currentVideo,
+          );
+
+          updateVideo(
+            currentVideo,
+            sceneProgress,
+          );
+        }
+
+        // ----------------------------------------------------
+        // NEXT VIDEO
+        // ----------------------------------------------------
+
+        const nextSceneIndex =
+          Math.min(
+            sceneCount - 1,
+            sceneIndex + 1,
+          );
+
+        const nextVideo =
+          videoRefs.current[
+            nextSceneIndex
+          ];
+
+        const crossfadeStart =
+          1 -
+          SCENE_CROSSFADE;
+
+        const transitionProgress =
+          sceneProgress >
+          crossfadeStart
+            ? clamp(
+                (sceneProgress -
+                  crossfadeStart) /
+                  SCENE_CROSSFADE,
+                0,
+                1,
+              )
+            : 0;
+
+        if (
+          nextVideo &&
+          nextSceneIndex !==
+            sceneIndex
+        ) {
+          keepVideoPaused(
+            nextVideo,
+          );
+
+          /**
+           * Next scene starts at 0
+           * and gets prepared before
+           * the crossfade.
+           */
+          if (
+            transitionProgress >
+            0
+          ) {
+            updateVideo(
+              nextVideo,
+              0,
+            );
+          }
+        }
+
+        // ----------------------------------------------------
+        // ZOOM
+        // ----------------------------------------------------
+
+        const currentScale =
+          1 +
+          sceneProgress *
+            ZOOM_AMOUNT;
+
+        const nextScale =
+          1 +
+          transitionProgress *
+            ZOOM_AMOUNT;
+
+        if (currentVideo) {
+          currentVideo.style.transform =
+            `scale(${currentScale})`;
+
+          currentVideo.style.opacity =
+            String(
+              1 -
+                transitionProgress,
+            );
+        }
+
+        if (
+          nextVideo &&
+          nextSceneIndex !==
+            sceneIndex
+        ) {
+          nextVideo.style.transform =
+            `scale(${nextScale})`;
+
+          nextVideo.style.opacity =
+            String(
+              transitionProgress,
+            );
+        }
+
+        // ----------------------------------------------------
+        // HERO STAGE
+        // ----------------------------------------------------
+
+        /**
+         * We retain the existing
+         * heroStages based on the
+         * original 50-frame narrative.
+         *
+         * The video timeline maps onto
+         * those 50 conceptual frames.
+         */
+        const virtualFrame =
+          Math.min(
+            50,
+            Math.max(
+              1,
+              Math.round(
+                nextProgress *
+                  49 +
+                  1,
+              ),
+            ),
+          );
+
+        if (
+          virtualFrame !==
+          lastStageRef.current
+        ) {
+          lastStageRef.current =
+            virtualFrame;
+
+          setActiveStageFrame(
+            virtualFrame,
+          );
+        }
 
         animationFrameRef.current =
-          null;
-      });
+          window.requestAnimationFrame(
+            render,
+          );
+      };
+
+    animationFrameRef.current =
+      window.requestAnimationFrame(
+        render,
+      );
 
     return () => {
+      cancelled = true;
+
       if (
         animationFrameRef.current !==
         null
       ) {
-        cancelAnimationFrame(
+        window.cancelAnimationFrame(
           animationFrameRef.current,
         );
 
@@ -531,10 +1119,9 @@ export function Hero() {
       }
     };
   }, [
-    activeIndex,
-    preloaded,
-    frameCount,
-    drawFrame,
+    videosReady,
+    keepVideoPaused,
+    updateVideo,
   ]);
 
   // ==========================================================
@@ -547,20 +1134,68 @@ export function Hero() {
       : HERO_SCROLL_LENGTH_VH;
 
   // ==========================================================
-  // EMPTY
+  // ACTIVE STAGE
   // ==========================================================
 
-  if (frameCount === 0) {
-    return null;
+  const activeStage =
+    useMemo(
+      () =>
+        getStageForFrame(
+          activeStageFrame,
+          heroStages,
+        ),
+      [activeStageFrame],
+    );
+
+  // ==========================================================
+  // EMPTY VIDEO STATE
+  // ==========================================================
+
+  if (
+    sceneAssets.length ===
+    0
+  ) {
+    return (
+      <section
+        ref={ref}
+        className="
+          relative
+          w-full
+          bg-base
+          m-0
+          p-0
+        "
+        style={{
+          height: `${scrollLength}vh`,
+        }}
+      >
+        <div
+          className="
+            sticky
+            top-0
+            flex
+            h-screen
+            w-full
+            items-center
+            justify-center
+            bg-base
+          "
+        >
+          <HeroContent
+            stage={
+              heroStages[0]
+            }
+            reducedMotion={
+              reducedMotion
+            }
+          />
+        </div>
+      </section>
+    );
   }
 
   // ==========================================================
-  // CINEMATIC HERO
-  //
-  // IMPORTANT:
-  // Do NOT return a static Hero when reducedMotion is enabled.
-  // The scroll sequence must remain functional on mobile.
-  // reducedMotion is used only for text/decorative animation.
+  // HERO
   // ==========================================================
 
   return (
@@ -591,45 +1226,207 @@ export function Hero() {
           p-0
         "
       >
-        {/* ====================================================
-            CANVAS
-            ==================================================== */}
+        {/* ==================================================
+            VIDEO BACKGROUND
+            ================================================== */}
 
         <div
           className="
             absolute
             inset-0
+            z-0
             h-full
             w-full
+            overflow-hidden
             bg-base
-            m-0
-            p-0
           "
         >
-          <canvas
-            ref={canvasRef}
-            aria-hidden="true"
-            className="
-              absolute
-              inset-0
-              h-full
-              w-full
-              select-none
-              pointer-events-none
-              block
-            "
-          />
+          {sceneAssets.map(
+            (
+              scene,
+              index,
+            ) => {
+              const isCurrent =
+                index ===
+                activeScene;
+
+              const isNext =
+                index ===
+                activeScene + 1;
+
+              if (
+                !isCurrent &&
+                !isNext
+              ) {
+                return null;
+              }
+
+              return (
+                <video
+                  key={scene.id}
+                  ref={(element) =>
+                    setVideoRef(
+                      index,
+                      element,
+                    )
+                  }
+                  src={scene.src}
+                  muted
+                  playsInline
+                  preload="auto"
+                  aria-hidden="true"
+                  className="
+                    absolute
+                    inset-0
+                    h-full
+                    w-full
+                    object-cover
+                    pointer-events-none
+                    select-none
+                    will-change-transform,opacity
+                  "
+                  style={{
+                    opacity:
+                      isCurrent
+                        ? 1
+                        : 0,
+                    transform:
+                      "scale(1)",
+                  }}
+                />
+              );
+            },
+          )}
         </div>
 
-        {/* ====================================================
-            OVERLAYS
-            ==================================================== */}
+        {/* ==================================================
+            CINEMATIC COLOR LAYER
+            ================================================== */}
 
-        <HeroOverlays />
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            z-[2]
+            bg-white/10
+          "
+        />
 
-        {/* ====================================================
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            z-[3]
+            bg-gradient-to-l
+            from-white/75
+            via-white/20
+            to-transparent
+          "
+        />
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-x-0
+            bottom-0
+            z-[3]
+            h-72
+            bg-gradient-to-t
+            from-white/85
+            via-white/30
+            to-transparent
+          "
+        />
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-x-0
+            top-0
+            z-[3]
+            h-40
+            bg-gradient-to-b
+            from-white/70
+            to-transparent
+          "
+        />
+
+        {/* ==================================================
+            NETWORK LINE
+            ================================================== */}
+
+        <svg
+          className="
+            pointer-events-none
+            absolute
+            -top-10
+            left-1/2
+            z-[4]
+            w-[180%]
+            max-w-3xl
+            -translate-x-1/2
+            opacity-25
+            sm:w-[140%]
+          "
+          viewBox="0 0 600 300"
+          fill="none"
+          aria-hidden="true"
+        >
+          <motion.path
+            d="
+              M 20 250
+              C 150 250,
+              180 60,
+              320 80
+              C 430 95,
+              460 220,
+              580 200
+            "
+            stroke="#C89B5C"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            initial={{
+              pathLength: 0,
+            }}
+            animate={{
+              pathLength: 1,
+            }}
+            transition={{
+              duration:
+                reducedMotion
+                  ? 0
+                  : 1.6,
+              ease: [
+                0.22,
+                1,
+                0.36,
+                1,
+              ],
+            }}
+          />
+        </svg>
+
+        {/* ==================================================
+            VIGNETTE
+            ================================================== */}
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            z-[4]
+            bg-[radial-gradient(circle_at_center,transparent_40%,rgba(255,255,255,0.28)_100%)]
+          "
+        />
+
+        {/* ==================================================
             CONTENT
-            ==================================================== */}
+            ================================================== */}
 
         <div
           className="
@@ -696,7 +1493,7 @@ export function Hero() {
                   : {
                       enter: {
                         duration:
-                          TEXT_ENTER_DURATION,
+                          0.55,
                         ease: [
                           0.22,
                           1,
@@ -706,7 +1503,7 @@ export function Hero() {
                       },
                       exit: {
                         duration:
-                          TEXT_EXIT_DURATION,
+                          0.28,
                         ease: [
                           0.4,
                           0,
@@ -718,7 +1515,9 @@ export function Hero() {
               }
             >
               <HeroContent
-                stage={activeStage}
+                stage={
+                  activeStage
+                }
                 reducedMotion={
                   reducedMotion
                 }
@@ -727,11 +1526,11 @@ export function Hero() {
           </AnimatePresence>
         </div>
 
-        {/* ====================================================
+        {/* ==================================================
             LOADING
-            ==================================================== */}
+            ================================================== */}
 
-        {!preloaded && (
+        {!videosReady && (
           <div
             className="
               pointer-events-none
@@ -782,9 +1581,9 @@ function HeroContent({
         py-0
       "
     >
-      {/* ======================================================
+      {/* ==================================================
           STAGE LABEL
-          ====================================================== */}
+          ================================================== */}
 
       <motion.div
         initial={
@@ -843,9 +1642,9 @@ function HeroContent({
         />
       </motion.div>
 
-      {/* ======================================================
+      {/* ==================================================
           HEADLINE
-          ====================================================== */}
+          ================================================== */}
 
       <motion.h1
         initial={
@@ -904,9 +1703,9 @@ function HeroContent({
         {stage.headline}
       </motion.h1>
 
-      {/* ======================================================
+      {/* ==================================================
           SUBHEADLINE
-          ====================================================== */}
+          ================================================== */}
 
       <motion.p
         initial={
@@ -965,9 +1764,9 @@ function HeroContent({
         {stage.subheadline}
       </motion.p>
 
-      {/* ======================================================
+      {/* ==================================================
           CTA
-          ====================================================== */}
+          ================================================== */}
 
       <motion.div
         initial={
@@ -1027,147 +1826,4 @@ function HeroContent({
       </motion.div>
     </div>
   );
-}
-
-// ============================================================
-// CINEMATIC OVERLAYS
-// ============================================================
-
-function HeroOverlays() {
-  return (
-    <>
-      <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[2]
-          bg-white/10
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[3]
-          bg-gradient-to-l
-          from-white/70
-          via-white/25
-          to-transparent
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          inset-x-0
-          bottom-0
-          z-[3]
-          h-64
-          bg-gradient-to-t
-          from-white/80
-          via-white/25
-          to-transparent
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          inset-x-0
-          top-0
-          z-[3]
-          h-40
-          bg-gradient-to-b
-          from-white/65
-          to-transparent
-        "
-      />
-
-      {/* ======================================================
-          NETWORK LINE
-          ====================================================== */}
-
-      <svg
-        className="
-          pointer-events-none
-          absolute
-          -top-10
-          left-1/2
-          z-[4]
-          w-[180%]
-          max-w-3xl
-          -translate-x-1/2
-          opacity-25
-          sm:w-[140%]
-        "
-        viewBox="0 0 600 300"
-        fill="none"
-        aria-hidden="true"
-      >
-        <motion.path
-          d="
-            M 20 250
-            C 150 250,
-            180 60,
-            320 80
-            C 430 95,
-            460 220,
-            580 200
-          "
-          stroke="#C89B5C"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          initial={{
-            pathLength: 0,
-          }}
-          animate={{
-            pathLength: 1,
-          }}
-          transition={{
-            duration:
-              reducedMotionSafeDuration(),
-            ease: [
-              0.22,
-              1,
-              0.36,
-              1,
-            ],
-          }}
-        />
-      </svg>
-
-      {/* ======================================================
-          VIGNETTE
-          ====================================================== */}
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[4]
-          bg-[radial-gradient(circle_at_center,transparent_40%,rgba(255,255,255,0.28)_100%)]
-        "
-      />
-    </>
-  );
-}
-
-function reducedMotionSafeDuration() {
-  if (
-    typeof window === "undefined"
-  ) {
-    return 1.6;
-  }
-
-  return window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  ).matches
-    ? 0
-    : 1.6;
 }

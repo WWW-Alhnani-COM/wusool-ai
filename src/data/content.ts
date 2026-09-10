@@ -176,8 +176,6 @@ export const heroStages: HeroStage[] = [
 export const heroContent = {
   brand: "جِذع AI",
 
-  eyebrow: "أتمتة وذكاء اصطناعي لقطاع الضيافة والسياحة",
-
   headline: "نبني الذكاء الذي تنمو عليه منشأتك",
 
   animatedHeadline: [

@@ -1261,26 +1261,27 @@ export function Hero() {
             CONTENT
             ================================================== */}
 
+      <div
+  className="
+    relative
+    z-20
+    flex
+    h-full
+    w-full
+    items-center
+    justify-center
+  "
+>
         <div
-          className="
-            relative
-            z-20
-            flex
-            h-full
-            w-full
-            items-center
-          "
-        >
-          <div
-            className="
-              mx-auto
-              w-full
-              max-w-7xl
-              px-5
-              sm:px-8
-              lg:px-12
-            "
-          >
+  className="
+    flex
+    w-full
+    justify-center
+    px-5
+    sm:px-8
+    lg:px-12
+  "
+>
             <AnimatePresence
               mode="wait"
               initial={false}
@@ -1313,11 +1314,11 @@ export function Hero() {
                   duration: 0.12,
                   ease: "easeOut",
                 }}
-                className="
-                  max-w-3xl
-                  text-right
-                  ml-auto
-                "
+         className="
+  w-full
+  max-w-4xl
+  text-center
+"
                 dir="rtl"
               >
                 {/* ==========================================
@@ -1419,8 +1420,7 @@ export function Hero() {
                     flex
                     flex-wrap
                     items-center
-                    justify-start
-                    gap-3
+justify-center                    gap-3
                   "
                 >
                   <Button
@@ -1434,6 +1434,8 @@ export function Hero() {
                   <Button
                     to="/كيف-نعمل"
                     variant="secondary"
+                      className="border-white/40 text-white hover:border-white/70 hover:text-white"
+
                   >
                     {
                       heroContent.ctaSecondary

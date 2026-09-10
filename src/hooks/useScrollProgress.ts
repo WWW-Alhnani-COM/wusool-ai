@@ -35,40 +35,19 @@ export function useScrollProgress<
       const rect =
         element.getBoundingClientRect();
 
-      /*
-       * موضع بداية الـ Hero الحقيقي
-       * بالنسبة إلى الصفحة كاملة.
-       */
       const scrollTop =
         getScrollTop();
 
       const elementTop =
         scrollTop + rect.top;
 
-      /*
-       * نستخدم الارتفاع الفعلي للعنصر
-       * بدل الاعتماد على offsetHeight فقط.
-       *
-       * هذا أكثر استقرارًا مع vh على
-       * متصفحات الجوال.
-       */
       const elementHeight =
         rect.height;
 
-      /*
-       * ارتفاع الـ viewport الحالي.
-       *
-       * visualViewport أكثر دقة على الجوال
-       * عندما يظهر أو يختفي شريط المتصفح.
-       */
       const viewportHeight =
         window.visualViewport?.height ||
         window.innerHeight;
 
-      /*
-       * المسافة التي يتحرك خلالها
-       * الـ Hero من أول Frame إلى آخر Frame.
-       */
       const scrollDistance =
         Math.max(
           elementHeight -
@@ -76,17 +55,10 @@ export function useScrollProgress<
           1,
         );
 
-      /*
-       * مقدار التمرير داخل الـ Hero.
-       */
       const scrollPosition =
         scrollTop -
         elementTop;
 
-      /*
-       * تحويل موضع التمرير إلى
-       * قيمة بين 0 و 1.
-       */
       const nextProgress =
         Math.min(
           Math.max(
@@ -113,39 +85,27 @@ export function useScrollProgress<
       );
     };
 
-    /*
-     * جدولة الحساب باستخدام RAF
-     * لمنع تنفيذ الحساب عشرات المرات
-     * أثناء السحب السريع على الهاتف.
-     */
-    const requestCompute =
-      () => {
-        if (
-          frame.current !==
-          null
-        ) {
-          return;
-        }
+    const requestCompute = () => {
+      if (
+        frame.current !==
+        null
+      ) {
+        return;
+      }
 
-        frame.current =
-          window.requestAnimationFrame(
-            () => {
-              frame.current =
-                null;
+      frame.current =
+        window.requestAnimationFrame(
+          () => {
+            frame.current =
+              null;
 
-              compute();
-            },
-          );
-      };
+            compute();
+          },
+        );
+    };
 
-    /*
-     * الحساب الأولي.
-     */
     compute();
 
-    /*
-     * الصفحة الرئيسية.
-     */
     window.addEventListener(
       "scroll",
       requestCompute,
@@ -154,9 +114,6 @@ export function useScrollProgress<
       },
     );
 
-    /*
-     * تغيير حجم نافذة المتصفح.
-     */
     window.addEventListener(
       "resize",
       requestCompute,
@@ -165,9 +122,6 @@ export function useScrollProgress<
       },
     );
 
-    /*
-     * تدوير الهاتف.
-     */
     window.addEventListener(
       "orientationchange",
       requestCompute,
@@ -176,12 +130,6 @@ export function useScrollProgress<
       },
     );
 
-    /*
-     * Mobile Safari / Chrome.
-     *
-     * visualViewport يتغير عندما تظهر
-     * أو تختفي واجهة المتصفح على الهاتف.
-     */
     const visualViewport =
       window.visualViewport;
 
@@ -203,12 +151,6 @@ export function useScrollProgress<
       );
     }
 
-    /*
-     * مراقبة تغير حجم الـ Hero.
-     *
-     * مهم لأن ارتفاع الـ Hero يعتمد
-     * على viewport وقد يتغير على الجوال.
-     */
     const resizeObserver =
       new ResizeObserver(() => {
         requestCompute();
@@ -223,9 +165,6 @@ export function useScrollProgress<
       );
     }
 
-    /*
-     * تنظيف الأحداث عند إزالة المكون.
-     */
     return () => {
       window.removeEventListener(
         "scroll",

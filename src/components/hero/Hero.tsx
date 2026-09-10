@@ -1037,6 +1037,7 @@ export function Hero() {
           bg-black
         "
       >
+        
         {/* ==================================================
             VIDEO BACKGROUND
             ================================================== */}
@@ -1103,7 +1104,17 @@ export function Hero() {
             },
           )}
         </div>
-
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            z-10
+            bg-white/[0.04]
+            backdrop-blur-[4px]
+            backdrop-saturate-[120%]
+          "
+        />
         {/* ==================================================
             DARK CINEMATIC OVERLAY
             ================================================== */}

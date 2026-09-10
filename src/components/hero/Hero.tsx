@@ -23,20 +23,6 @@ import { useScrollProgress } from "@/hooks/useScrollProgress";
 // CONFIGURATION
 // ============================================================
 
-/*
- * مقدار الـ scroll المطلوب لتشغيل الـ 50 frame كاملة.
- *
- * Desktop:
- * 500vh
- *
- * Mobile:
- * 420vh
- *
- * مهم:
- * لا نستخدم lowPower لتقليل طول الـ scroll.
- * lowPower يؤثر فقط على جودة الـ canvas / DPR.
- */
-
 const HERO_SCROLL_LENGTH_VH = 500;
 const HERO_SCROLL_LENGTH_VH_MOBILE = 420;
 
@@ -267,12 +253,6 @@ export function Hero() {
       const rect =
         canvas.getBoundingClientRect();
 
-      /*
-       * الهاتف يستخدم DPR أقل للحفاظ
-       * على الأداء، لكنه لا يؤثر إطلاقًا
-       * على سرعة الـscroll أو عدد الـframes.
-       */
-
       const maxDpr =
         lowPower
           ? 1.5
@@ -386,10 +366,7 @@ export function Hero() {
         const imageHeight =
           image.naturalHeight;
 
-        /*
-         * object-fit: cover
-         */
-
+        // object-fit: cover
         const scale =
           Math.max(
             canvasWidth /
@@ -422,12 +399,6 @@ export function Hero() {
           0,
           0,
         );
-
-        /*
-         * لا نمسح الـcanvas قبل رسم
-         * الـframe الجديد حتى لا تظهر
-         * ومضات سوداء على الهاتف.
-         */
 
         context.drawImage(
           image,
@@ -568,15 +539,6 @@ export function Hero() {
   // SCROLL LENGTH
   // ==========================================================
 
-  /*
-   * الهاتف يحصل على 420vh.
-   *
-   * هذا يعني أن المستخدم لديه مساحة
-   * كافية لتحريك جميع الـ50 Frame.
-   *
-   * لا نستخدم lowPower هنا.
-   */
-
   const scrollLength =
     isMobile
       ? HERO_SCROLL_LENGTH_VH_MOBILE
@@ -603,11 +565,13 @@ export function Hero() {
           w-full
           overflow-hidden
           bg-base
+          m-0
+          p-0
         "
         aria-label="جِذع AI"
       >
         <img
-          src={frames[0].src}
+          src={frames[0].src]}
           alt={frames[0].alt}
           loading="eager"
           decoding="async"
@@ -631,6 +595,8 @@ export function Hero() {
             section-px
             flex
             items-center
+            m-0
+            p-0
           "
         >
           <HeroContent
@@ -653,6 +619,8 @@ export function Hero() {
         relative
         w-full
         bg-base
+        m-0
+        p-0
       "
       style={{
         height: `${scrollLength}vh`,
@@ -663,10 +631,13 @@ export function Hero() {
         className="
           sticky
           top-0
+          left-0
           h-screen
           w-full
           overflow-hidden
           bg-base
+          m-0
+          p-0
         "
       >
         {/* ====================================================
@@ -680,6 +651,8 @@ export function Hero() {
             h-full
             w-full
             bg-base
+            m-0
+            p-0
           "
         >
           <canvas
@@ -692,6 +665,7 @@ export function Hero() {
               w-full
               select-none
               pointer-events-none
+              block
             "
           />
         </div>
@@ -708,13 +682,16 @@ export function Hero() {
 
         <div
           className="
-            relative
+            absolute
+            inset-0
             z-10
-            min-h-screen
+            h-screen
+            w-full
             container-page
             section-px
             flex
             items-center
+            m-0
           "
         >
           <AnimatePresence
@@ -766,9 +743,7 @@ export function Hero() {
               }}
             >
               <HeroContent
-                stage={
-                  activeStage
-                }
+                stage={activeStage}
               />
             </motion.div>
           </AnimatePresence>
@@ -826,8 +801,7 @@ function HeroContent({
         text-center
         px-2
         sm:px-0
-        py-24
-        sm:py-32
+        py-0
       "
     >
       {/* ======================================================

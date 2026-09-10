@@ -1,115 +1,227 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-/**
- * Returns scroll progress (0 → 1) through a tall wrapper element.
- *
- * Designed for scroll-driven sections with a sticky child.
- * Works reliably on desktop and mobile, including mobile viewport changes.
- */
-export function useScrollProgress<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null);
-  const [progress, setProgress] = useState(0);
-  const frame = useRef<number | null>(null);
+export function useScrollProgress<
+  T extends HTMLElement,
+>() {
+  const ref =
+    useRef<T | null>(null);
+
+  const [progress, setProgress] =
+    useState(0);
+
+  const frame =
+    useRef<number | null>(null);
 
   useEffect(() => {
     const compute = () => {
-      const el = ref.current;
+      const element = ref.current;
 
-      if (!el) return;
+      if (!element) {
+        return;
+      }
 
-      const rect = el.getBoundingClientRect();
+      const rect =
+        element.getBoundingClientRect();
 
-      // Absolute position of the wrapper in the document.
-      const absoluteTop = window.scrollY + rect.top;
+      /*
+       * الموضع الحقيقي للـHero داخل الصفحة.
+       *
+       * لا نعتمد على rect.top وحده لأن
+       * mobile browsers تغير ارتفاع الـviewport
+       * أثناء ظهور/اختفاء شريط العنوان.
+       */
+      const elementTop =
+        window.scrollY + rect.top;
 
-      // The amount of scroll available inside the tall wrapper.
-      const scrollDistance = Math.max(
-        el.offsetHeight - window.innerHeight,
-        1,
-      );
+      /*
+       * المسافة الفعلية التي يمكن للمستخدم
+       * التمرير خلالها داخل الـHero.
+       */
+      const viewportHeight =
+        window.innerHeight;
 
-      // Current scroll position relative to the wrapper.
-      const currentScroll = window.scrollY - absoluteTop;
+      const elementHeight =
+        element.offsetHeight;
 
-      const nextProgress = Math.min(
-        Math.max(currentScroll / scrollDistance, 0),
-        1,
-      );
+      const scrollDistance =
+        Math.max(
+          elementHeight -
+            viewportHeight,
+          1,
+        );
 
-      setProgress((current) =>
-        Math.abs(current - nextProgress) < 0.001
-          ? current
-          : nextProgress,
+      /*
+       * مقدار التمرير منذ بداية الـHero.
+       */
+      const scrollPosition =
+        window.scrollY -
+        elementTop;
+
+      const nextProgress =
+        Math.min(
+          Math.max(
+            scrollPosition /
+              scrollDistance,
+            0,
+          ),
+          1,
+        );
+
+      setProgress(
+        (current) => {
+          if (
+            Math.abs(
+              current -
+                nextProgress,
+            ) < 0.0005
+          ) {
+            return current;
+          }
+
+          return nextProgress;
+        },
       );
     };
 
-    const scheduleCompute = () => {
-      if (frame.current !== null) return;
+    const requestCompute =
+      () => {
+        if (
+          frame.current !==
+          null
+        ) {
+          return;
+        }
 
-      frame.current = window.requestAnimationFrame(() => {
-        compute();
-        frame.current = null;
-      });
-    };
+        frame.current =
+          window.requestAnimationFrame(
+            () => {
+              compute();
 
+              frame.current =
+                null;
+            },
+          );
+      };
+
+    /*
+     * حساب أولي.
+     */
     compute();
 
-    window.addEventListener("scroll", scheduleCompute, {
-      passive: true,
-    });
+    /*
+     * الصفحة.
+     */
+    window.addEventListener(
+      "scroll",
+      requestCompute,
+      {
+        passive: true,
+      },
+    );
 
-    window.addEventListener("resize", scheduleCompute);
+    /*
+     * تغيير حجم الشاشة.
+     */
+    window.addEventListener(
+      "resize",
+      requestCompute,
+    );
 
+    /*
+     * تدوير الهاتف.
+     */
     window.addEventListener(
       "orientationchange",
-      scheduleCompute,
+      requestCompute,
     );
 
-    // Mobile browsers can change the visual viewport when
-    // the address bar appears/disappears.
-    const visualViewport = window.visualViewport;
+    /*
+     * Mobile Safari / Chrome
+     * visual viewport.
+     */
+    const visualViewport =
+      window.visualViewport;
 
-    visualViewport?.addEventListener(
-      "resize",
-      scheduleCompute,
-    );
+    if (visualViewport) {
+      visualViewport.addEventListener(
+        "resize",
+        requestCompute,
+      );
 
-    visualViewport?.addEventListener(
-      "scroll",
-      scheduleCompute,
-    );
+      visualViewport.addEventListener(
+        "scroll",
+        requestCompute,
+      );
+    }
+
+    /*
+     * في حال تغير ارتفاع الـHero
+     * بعد تحميل الصور أو الخطوط.
+     */
+    const resizeObserver =
+      new ResizeObserver(() => {
+        requestCompute();
+      });
+
+    const element =
+      ref.current;
+
+    if (element) {
+      resizeObserver.observe(
+        element,
+      );
+    }
 
     return () => {
       window.removeEventListener(
         "scroll",
-        scheduleCompute,
+        requestCompute,
       );
 
       window.removeEventListener(
         "resize",
-        scheduleCompute,
+        requestCompute,
       );
 
       window.removeEventListener(
         "orientationchange",
-        scheduleCompute,
+        requestCompute,
       );
 
-      visualViewport?.removeEventListener(
-        "resize",
-        scheduleCompute,
-      );
+      if (visualViewport) {
+        visualViewport.removeEventListener(
+          "resize",
+          requestCompute,
+        );
 
-      visualViewport?.removeEventListener(
-        "scroll",
-        scheduleCompute,
-      );
+        visualViewport.removeEventListener(
+          "scroll",
+          requestCompute,
+        );
+      }
 
-      if (frame.current !== null) {
-        window.cancelAnimationFrame(frame.current);
+      resizeObserver.disconnect();
+
+      if (
+        frame.current !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          frame.current,
+        );
+
+        frame.current =
+          null;
       }
     };
   }, []);
 
-  return { ref, progress };
+  return {
+    ref,
+    progress,
+  };
 }

@@ -55,8 +55,7 @@ export function Header() {
   return (
     <header
       className="
-        sticky
-        lg:fixed
+        fixed
         inset-x-0
         top-0
         z-[100]
@@ -174,9 +173,7 @@ export function Header() {
                   end={
                     item.to === "/"
                   }
-                  className={({
-                    isActive,
-                  }) =>
+                  className={({ isActive }) =>
                     `
                       relative
                       py-2
@@ -364,12 +361,8 @@ export function Header() {
                   end={
                     item.to === "/"
                   }
-                  onClick={
-                    closeMenu
-                  }
-                  className={({
-                    isActive,
-                  }) =>
+                  onClick={closeMenu}
+                  className={({ isActive }) =>
                     `
                       block
                       rounded-xl
@@ -406,9 +399,7 @@ export function Header() {
                   w-full
                   !rounded-xl
                 "
-                onClick={
-                  closeMenu
-                }
+                onClick={closeMenu}
               >
                 ابدأ الآن
               </Button>

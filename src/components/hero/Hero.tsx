@@ -1470,48 +1470,6 @@ export function Hero() {
             BRAND / TOP
             ================================================== */}
 
-        <div
-          className="
-            absolute
-            left-5
-            right-5
-            top-5
-            z-30
-            flex
-            items-center
-            justify-between
-            sm:left-8
-            sm:right-8
-            sm:top-8
-            lg:left-12
-            lg:right-12
-          "
-          dir="rtl"
-        >
-          <div
-            className="
-              text-lg
-              font-bold
-              tracking-tight
-              text-white
-              sm:text-xl
-            "
-          >
-            {heroContent.brand}
-          </div>
-
-          <div
-            className="
-              hidden
-              text-xs
-              text-white/50
-              sm:block
-            "
-          >
-            {heroContent.scrollLabel}
-          </div>
-        </div>
-
         {/* ==================================================
             SCROLL INDICATOR
             ================================================== */}

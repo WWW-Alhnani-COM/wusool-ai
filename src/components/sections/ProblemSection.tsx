@@ -24,10 +24,6 @@ export function ProblemSection() {
     offset: ['start start', 'end end'],
   });
 
-  /*
-   * تغيير النص يبقى مرتبطًا بالتمرير
-   * حتى عند تفعيل reduced motion.
-   */
   useMotionValueEvent(scrollYProgress, 'change', (latest) => {
     const total = problemContent.points.length;
 
@@ -43,11 +39,18 @@ export function ProblemSection() {
 
   const currentPoint = problemContent.points[activeIndex];
 
+  const isLastPoint =
+    activeIndex === problemContent.points.length - 1;
+
   return (
     <section
       ref={sectionRef}
       dir="rtl"
-      className="relative h-[300vh] bg-base"
+      className="
+        relative
+        h-[300vh]
+        bg-base
+      "
     >
       <div
         className="
@@ -74,7 +77,10 @@ export function ProblemSection() {
             justify-center
           "
         >
-          {/* Background glow */}
+          {/* ================================================
+              BACKGROUND ATMOSPHERE
+              ================================================ */}
+
           <div
             aria-hidden="true"
             className="
@@ -96,6 +102,10 @@ export function ProblemSection() {
             "
           />
 
+          {/* ================================================
+              MAIN CONTENT
+              ================================================ */}
+
           <div
             className="
               relative
@@ -103,21 +113,27 @@ export function ProblemSection() {
               flex
               w-full
               max-w-5xl
-              -translate-y-4
               flex-col
               items-center
               justify-center
               text-center
-              sm:-translate-y-6
-              lg:-translate-y-8
             "
           >
-            {/* Heading */}
+            {/* ================================================
+                SECTION HEADING
+                ================================================ */}
+
             <motion.div
               initial={
                 reducedMotion
-                  ? { opacity: 1, y: 0 }
-                  : { opacity: 0, y: 30 }
+                  ? {
+                      opacity: 1,
+                      y: 0,
+                    }
+                  : {
+                      opacity: 0,
+                      y: 30,
+                    }
               }
               whileInView={{
                 opacity: 1,
@@ -135,14 +151,13 @@ export function ProblemSection() {
                 mb-10
                 w-full
                 max-w-4xl
-                translate-y-4
                 px-4
                 sm:mb-14
-                sm:translate-y-5
                 lg:mb-16
-                lg:translate-y-6
               "
             >
+              {/* Eyebrow */}
+
               <span
                 className="
                   mb-4
@@ -159,6 +174,8 @@ export function ProblemSection() {
                 المشكلة
               </span>
 
+              {/* Main Heading */}
+
               <h2
                 className="
                   font-display
@@ -170,28 +187,30 @@ export function ProblemSection() {
                   sm:text-4xl
                   md:text-5xl
                   lg:text-6xl
-                  xl:text-6xl
                 "
               >
-                كل نقطة توقف... تعيق نمو العمل.
+                {problemContent.heading}
               </h2>
             </motion.div>
 
-            {/* Current point */}
+            {/* ================================================
+                PROBLEM STORY
+                ================================================ */}
+
             <div
               className="
                 relative
                 flex
-                min-h-[120px]
+                min-h-[170px]
                 w-full
                 items-center
                 justify-center
                 overflow-hidden
                 px-5
-                sm:min-h-[160px]
+                sm:min-h-[210px]
                 sm:px-8
-                md:min-h-[200px]
-                lg:min-h-[230px]
+                md:min-h-[240px]
+                lg:min-h-[270px]
               "
             >
               <AnimatePresence
@@ -239,10 +258,29 @@ export function ProblemSection() {
                     absolute
                     inset-0
                     flex
+                    flex-col
                     items-center
                     justify-center
                   "
                 >
+                  {/* Number */}
+
+                  <span
+                    className="
+                      mb-4
+                      text-xs
+                      font-medium
+                      uppercase
+                      tracking-[0.22em]
+                      text-brass/80
+                      sm:text-sm
+                    "
+                  >
+                    {String(activeIndex + 1).padStart(2, '0')}
+                  </span>
+
+                  {/* Problem */}
+
                   <p
                     className="
                       max-w-3xl
@@ -263,6 +301,96 @@ export function ProblemSection() {
                 </motion.div>
               </AnimatePresence>
             </div>
+
+            {/* ================================================
+                PROGRESS DOTS
+                ================================================ */}
+
+            <div
+              className="
+                mt-8
+                flex
+                items-center
+                justify-center
+                gap-2
+                sm:mt-10
+              "
+              aria-hidden="true"
+            >
+              {problemContent.points.map((_, index) => {
+                const isActive = index === activeIndex;
+
+                return (
+                  <span
+                    key={index}
+                    className={`
+                      h-1
+                      rounded-full
+                      transition-all
+                      duration-300
+                      ${
+                        isActive
+                          ? 'w-8 bg-brass'
+                          : 'w-1.5 bg-ink/15'
+                      }
+                    `}
+                  />
+                );
+              })}
+            </div>
+
+            {/* ================================================
+                FINAL MESSAGE
+                ================================================ */}
+
+            <motion.div
+              initial={false}
+              animate={{
+                opacity: isLastPoint ? 1 : 0,
+                y: isLastPoint ? 0 : 12,
+              }}
+              transition={{
+                duration: reducedMotion ? 0 : 0.4,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="
+                pointer-events-none
+                mt-10
+                max-w-3xl
+                text-center
+                sm:mt-12
+              "
+              aria-hidden={!isLastPoint}
+            >
+              <p
+                className="
+                  font-display
+                  text-xl
+                  font-semibold
+                  leading-relaxed
+                  text-ink
+                  sm:text-2xl
+                  lg:text-3xl
+                "
+              >
+                المشكلة ليست في كثرة الأنظمة.
+              </p>
+
+              <p
+                className="
+                  mt-2
+                  font-display
+                  text-xl
+                  font-bold
+                  leading-relaxed
+                  text-brass
+                  sm:text-2xl
+                  lg:text-3xl
+                "
+              >
+                المشكلة أنها لا تعمل معًا.
+              </p>
+            </motion.div>
           </div>
         </Container>
       </div>

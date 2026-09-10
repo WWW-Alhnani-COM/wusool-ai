@@ -1432,59 +1432,7 @@ justify-center                    gap-3
             BRAND / TOP
             ================================================== */}
 
-        {/* ==================================================
-            SCROLL INDICATOR
-            ================================================== */}
-
-        <div
-          className="
-            absolute
-            bottom-6
-            left-1/2
-            z-30
-            -translate-x-1/2
-            text-center
-          "
-          dir="rtl"
-        >
-          <div
-            className="
-              mb-2
-              text-[10px]
-              font-medium
-              tracking-wider
-              text-white/50
-            "
-          >
-            {heroContent.scrollLabel}
-          </div>
-
-          <div
-            className="
-              mx-auto
-              h-8
-              w-px
-              overflow-hidden
-              bg-white/20
-            "
-          >
-            <motion.div
-              animate={{
-                y: [0, 16, 0],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="
-                h-3
-                w-full
-                bg-white/80
-              "
-            />
-          </div>
-        </div>
+      
 
         {/* ==================================================
             PROGRESS INDICATOR

@@ -1322,60 +1322,53 @@ export function Hero() {
                 dir="rtl"
               >
     
-                {/* ==========================================
-                    LABEL
-                    ========================================== */}
+        {/* LABEL */}
+<div
+  className="
+    mb-4
+    text-center
+    text-sm
+    font-medium
+    tracking-wide
+    text-white/65
+  "
+>
+  {currentStage?.label}
+</div>
 
-                <div
-                  className="
-                    mb-4
-                    text-sm
-                    font-medium
-                    tracking-wide
-                    text-white/65
-                  "
-                >
-                  {currentStage?.label}
-                </div>
+{/* MAIN HEADLINE */}
+<h1
+  className="
+    text-center
+    text-4xl
+    font-bold
+    leading-[1.12]
+    tracking-tight
+    text-white
+    sm:text-5xl
+    lg:text-6xl
+    xl:text-7xl
+  "
+>
+  {currentStage?.headline}
+</h1>
 
-                {/* ==========================================
-                    MAIN HEADLINE
-                    ========================================== */}
-
-                <h1
-                  className="
-                    text-4xl
-                    font-bold
-                    leading-[1.12]
-                    tracking-tight
-                    text-white
-                    sm:text-5xl
-                    lg:text-6xl
-                    xl:text-7xl
-                  "
-                >
-                  {currentStage?.headline}
-                </h1>
-
-                {/* ==========================================
-                    SUBHEADLINE
-                    ========================================== */}
-
-                <p
-                  className="
-                    mt-6
-                    max-w-2xl
-                    text-base
-                    leading-8
-                    text-white/75
-                    sm:text-lg
-                    lg:text-xl
-                  "
-                >
-                  {
-                    currentStage?.subheadline
-                  }
-                </p>
+{/* SUBHEADLINE */}
+<p
+  className="
+    mx-auto
+    mt-6
+    max-w-2xl
+    text-center
+    text-base
+    leading-8
+    text-white/75
+    sm:text-lg
+    lg:text-xl
+  "
+>
+  {currentStage?.subheadline}
+</p>
 
                 {/* ==========================================
                     CTA

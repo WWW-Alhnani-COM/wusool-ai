@@ -35,7 +35,6 @@ const HERO_SCROLL_LENGTH_VH_MOBILE = 480;
 
 // Virtual cinematic autoplay speed.
 // Used to move the narrative timeline while idle.
-const AUTO_PLAY_SPEED = 0.018;
 
 // Timeline easing during scroll.
 const SCRUB_EASE = 0.045;
@@ -850,14 +849,13 @@ export function Hero() {
         // CURRENT SCENE
         // ====================================================
 
-        const {
-          sceneIndex,
-          sceneProgress,
-        } =
-          getSceneProgress(
-            smoothProgressRef.current,
-            sceneCount,
-          );
+const {
+  sceneIndex,
+} =
+  getSceneProgress(
+    smoothProgressRef.current,
+    sceneCount,
+  );
 
         const currentVideo =
           videoRefs.current[

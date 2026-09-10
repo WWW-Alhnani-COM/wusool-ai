@@ -26,33 +26,26 @@ import { useScrollProgress } from "@/hooks/useScrollProgress";
 // ============================================================
 
 const HERO_SCROLL_LENGTH_VH = 560;
-
 const HERO_SCROLL_LENGTH_VH_MOBILE = 480;
 
-// ------------------------------------------------------------
-// Cinematic motion
-// ------------------------------------------------------------
+// ============================================================
+// CINEMATIC MOTION
+// ============================================================
 
-const AUTO_PLAY_SPEED = 0.018;
-
-const SCRUB_EASE = 0.045;
-
-const VIDEO_TIME_EASE = 0.085;
+// لا يوجد smoothing للـ scroll.
+// الـ scroll يحدد موضع الفيديو مباشرة.
 
 const ZOOM_AMOUNT = 0.095;
 
-// Last percentage of each scene used for crossfade.
+// نسبة بسيطة لعمل crossfade بين المشاهد.
 const SCENE_CROSSFADE = 0.12;
 
-// Scroll gesture multiplier.
-const SCROLL_GESTURE_GAIN = 1.15;
+// سرعة autoplay الخفيفة جدًا عند عدم التمرير.
+const AUTO_PLAY_SPEED = 0.000018;
 
-// Delay before considering scrolling stopped.
-const SCROLL_STOP_DELAY = 120;
-
-// Minimum movement required before considering
-// a gesture an actual scroll.
-const SCROLL_EPSILON = 0.00005;
+// يستخدم فقط لمعرفة انتهاء حركة التمرير.
+// لا يؤخر الـ scroll نفسه.
+const SCROLL_STOP_DELAY = 140;
 
 // ============================================================
 // TYPES
@@ -75,17 +68,6 @@ function clamp(
   return Math.min(
     Math.max(value, min),
     max,
-  );
-}
-
-function lerp(
-  current: number,
-  target: number,
-  amount: number,
-) {
-  return (
-    current +
-    (target - current) * amount
   );
 }
 
@@ -178,10 +160,7 @@ const videoModules =
       query: "?url",
       import: "default",
     },
-  ) as Record<
-    string,
-    string
-  >;
+  ) as Record<string, string>;
 
 const sceneAssets: SceneAsset[] =
   Object.entries(videoModules)
@@ -250,79 +229,60 @@ export function Hero() {
     >([]);
 
   // ==========================================================
-  // CINEMATIC REFS
+  // DIRECT TIMELINE REFS
   // ==========================================================
 
   /**
-   * Current cinematic position.
+   * الموضع الحالي للـ timeline.
    *
-   * This is intentionally NOT directly equal
-   * to the page scroll progress.
+   * مهم:
+   * لا يوجد lerp أو smoothing هنا.
+   * القيمة تساوي scroll progress مباشرة.
    */
-  const smoothProgressRef =
+  const timelineProgressRef =
     useRef(0);
 
   /**
-   * Desired cinematic position.
-   */
-  const targetProgressRef =
-    useRef(0);
-
-  /**
-   * Last page scroll progress.
+   * آخر scroll progress.
    */
   const previousScrollProgressRef =
     useRef(0);
 
   /**
-   * Page progress when the current
-   * scroll gesture started.
-   */
-  const scrollAnchorProgressRef =
-    useRef(0);
-
-  /**
-   * Cinematic position when the current
-   * scroll gesture started.
-   */
-  const virtualAnchorProgressRef =
-    useRef(0);
-
-  /**
-   * Whether the user is currently scrolling.
+   * هل المستخدم يقوم بالتمرير الآن؟
    */
   const isScrollingRef =
     useRef(false);
 
   /**
-   * RAF.
+   * RAF الخاص بالـ idle autoplay.
    */
   const animationFrameRef =
     useRef<number | null>(null);
 
   /**
-   * Timer used to detect scroll stop.
+   * Timer لمعرفة توقف المستخدم عن التمرير.
    */
   const scrollStopTimerRef =
     useRef<number | null>(null);
 
   /**
-   * Prevent duplicate scroll initialization.
+   * منع تهيئة scroll أكثر من مرة.
    */
   const scrollInitializedRef =
     useRef(false);
 
   /**
-   * Prevent unnecessary React stage updates.
+   * منع تحديث React بدون داعٍ.
    */
   const lastStageRef =
     useRef(-1);
 
   /**
-   * Last active scene.
+   * آخر scene.
    */
   const lastSceneRef =
-    useRef(0);
+    useRef(-1);
 
   // ==========================================================
   // RESPONSIVE
@@ -412,8 +372,8 @@ export function Hero() {
               video.preload = "auto";
 
               /*
-               * Every video must be independently
-               * controlled by the Hero timeline.
+               * الفيديوهات لا تعمل تلقائيًا.
+               * Hero هو الذي يتحكم فيها.
                */
               video.autoplay = false;
               video.loop = false;
@@ -428,7 +388,8 @@ export function Hero() {
 
               await new Promise<void>(
                 (resolve) => {
-                  let resolved = false;
+                  let resolved =
+                    false;
 
                   const cleanup =
                     () => {
@@ -532,19 +493,10 @@ export function Hero() {
         1,
       );
 
-    smoothProgressRef.current =
-      initial;
-
-    targetProgressRef.current =
+    timelineProgressRef.current =
       initial;
 
     previousScrollProgressRef.current =
-      initial;
-
-    scrollAnchorProgressRef.current =
-      initial;
-
-    virtualAnchorProgressRef.current =
       initial;
 
     scrollInitializedRef.current =
@@ -552,164 +504,115 @@ export function Hero() {
   }, []);
 
   // ==========================================================
-  // SCROLL GESTURE DETECTION
+  // DIRECT SCROLL → TIMELINE
   // ==========================================================
 
   useEffect(() => {
-    const handleScroll =
-      () => {
-        const nextProgress =
-          clamp(
-            progress,
-            0,
-            1,
-          );
+    /*
+     * هذا هو الجزء الأهم.
+     *
+     * لا يوجد:
+     *
+     * targetProgress
+     * smoothProgress
+     * lerp
+     * SCRUB_EASE
+     * SCROLL_GESTURE_GAIN
+     *
+     * الـ progress الحالي للصفحة
+     * ينتقل مباشرة إلى timeline.
+     */
 
-        const previous =
-          previousScrollProgressRef.current;
-
-        if (
-          !scrollInitializedRef.current
-        ) {
-          previousScrollProgressRef.current =
-            nextProgress;
-
-          scrollInitializedRef.current =
-            true;
-
-          return;
-        }
-
-        const delta =
-          nextProgress - previous;
-
-        previousScrollProgressRef.current =
-          nextProgress;
-
-        if (
-          Math.abs(delta) <
-          SCROLL_EPSILON
-        ) {
-          return;
-        }
-
-        // ----------------------------------------------------
-        // START OF SCROLL GESTURE
-        // ----------------------------------------------------
-
-        if (
-          !isScrollingRef.current
-        ) {
-          isScrollingRef.current =
-            true;
-
-          scrollAnchorProgressRef.current =
-            nextProgress;
-
-          virtualAnchorProgressRef.current =
-            smoothProgressRef.current;
-
-          /*
-           * Pause the active video immediately when the
-           * user starts scrubbing.
-           *
-           * This prevents natural playback from fighting
-           * with scroll-driven currentTime updates.
-           */
-          videoRefs.current.forEach(
-            (video) => {
-              if (
-                video &&
-                !video.paused
-              ) {
-                video.pause();
-              }
-            },
-          );
-        }
-
-        // ----------------------------------------------------
-        // MAP PAGE SCROLL → CINEMATIC TARGET
-        // ----------------------------------------------------
-
-        const scrollDelta =
-          nextProgress -
-          scrollAnchorProgressRef.current;
-
-        const target =
-          virtualAnchorProgressRef.current +
-          scrollDelta *
-            SCROLL_GESTURE_GAIN;
-
-        targetProgressRef.current =
-          clamp(
-            target,
-            0,
-            1,
-          );
-
-        // ----------------------------------------------------
-        // RESET STOP TIMER
-        // ----------------------------------------------------
-
-        if (
-          scrollStopTimerRef.current !==
-          null
-        ) {
-          window.clearTimeout(
-            scrollStopTimerRef.current,
-          );
-        }
-
-        scrollStopTimerRef.current =
-          window.setTimeout(
-            () => {
-              isScrollingRef.current =
-                false;
-
-              virtualAnchorProgressRef.current =
-                smoothProgressRef.current;
-
-              scrollAnchorProgressRef.current =
-                previousScrollProgressRef.current;
-
-              targetProgressRef.current =
-                smoothProgressRef.current;
-            },
-            SCROLL_STOP_DELAY,
-          );
-      };
-
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      {
-        passive: true,
-      },
-    );
-
-    return () => {
-      window.removeEventListener(
-        "scroll",
-        handleScroll,
+    const nextProgress =
+      clamp(
+        progress,
+        0,
+        1,
       );
 
-      if (
-        scrollStopTimerRef.current !==
-        null
-      ) {
-        window.clearTimeout(
-          scrollStopTimerRef.current,
-        );
+    if (
+      !scrollInitializedRef.current
+    ) {
+      previousScrollProgressRef.current =
+        nextProgress;
 
-        scrollStopTimerRef.current =
-          null;
-      }
-    };
+      timelineProgressRef.current =
+        nextProgress;
+
+      scrollInitializedRef.current =
+        true;
+
+      return;
+    }
+
+    const previous =
+      previousScrollProgressRef.current;
+
+    const delta =
+      nextProgress - previous;
+
+    previousScrollProgressRef.current =
+      nextProgress;
+
+    if (
+      Math.abs(delta) < 0.000001
+    ) {
+      return;
+    }
+
+    /*
+     * DIRECT MAPPING
+     */
+    timelineProgressRef.current =
+      nextProgress;
+
+    /*
+     * عند بدء التمرير:
+     * أوقف كل الفيديوهات حتى لا يحدث
+     * تعارض بين playback و currentTime.
+     */
+    if (
+      !isScrollingRef.current
+    ) {
+      isScrollingRef.current =
+        true;
+
+      videoRefs.current.forEach(
+        (video) => {
+          if (
+            video &&
+            !video.paused
+          ) {
+            video.pause();
+          }
+        },
+      );
+    }
+
+    /*
+     * اكتشاف توقف الـ scroll.
+     */
+    if (
+      scrollStopTimerRef.current !==
+      null
+    ) {
+      window.clearTimeout(
+        scrollStopTimerRef.current,
+      );
+    }
+
+    scrollStopTimerRef.current =
+      window.setTimeout(
+        () => {
+          isScrollingRef.current =
+            false;
+        },
+        SCROLL_STOP_DELAY,
+      );
   }, [progress]);
 
   // ==========================================================
-  // VIDEO CONTROL
+  // DIRECT VIDEO SEEK
   // ==========================================================
 
   const updateVideo =
@@ -731,6 +634,9 @@ export function Hero() {
         const duration =
           video.duration;
 
+        /*
+         * Scroll progress → video time
+         */
         const desiredTime =
           clamp(
             desiredProgress,
@@ -738,28 +644,26 @@ export function Hero() {
             1,
           ) * duration;
 
-        const currentTime =
-          video.currentTime;
-
-        const nextTime =
-          lerp(
-            currentTime,
-            desiredTime,
-            VIDEO_TIME_EASE,
-          );
-
+        /*
+         * DIRECT SEEK
+         *
+         * لا lerp.
+         * لا easing.
+         * لا interpolation.
+         */
         if (
           Math.abs(
-            nextTime -
-              currentTime,
-          ) > 0.004
+            video.currentTime -
+              desiredTime,
+          ) > 0.001
         ) {
           try {
             video.currentTime =
-              nextTime;
+              desiredTime;
           } catch {
-            // Ignore seek errors during
-            // metadata/loading transitions.
+            /*
+             * قد يحدث أثناء تغيير metadata.
+             */
           }
         }
       },
@@ -808,13 +712,7 @@ export function Hero() {
           return;
         }
 
-        video.muted = true;
-        video.playsInline = true;
-        video.autoplay = false;
-
-        if (
-          !video.paused
-        ) {
+        if (!video.paused) {
           return;
         }
 
@@ -822,9 +720,8 @@ export function Hero() {
           await video.play();
         } catch {
           /*
-           * Browser autoplay policy may prevent
-           * playback. Since the video is muted,
-           * modern browsers normally allow it.
+           * المتصفح قد يمنع autoplay.
+           * الفيديو muted لذلك غالبًا لن يحدث ذلك.
            */
         }
       },
@@ -832,12 +729,11 @@ export function Hero() {
     );
 
   // ==========================================================
-  // CINEMATIC RAF LOOP
+  // MAIN VIDEO TIMELINE
   // ==========================================================
 
   useEffect(() => {
     if (
-      !videosReady ||
       sceneAssets.length === 0
     ) {
       return;
@@ -845,85 +741,89 @@ export function Hero() {
 
     let cancelled = false;
 
-    const render =
+    const renderTimeline =
       () => {
         if (cancelled) {
           return;
         }
 
-        // ====================================================
-        // AUTOPLAY TIMELINE WHEN NOT SCROLLING
-        // ====================================================
-
-        if (
-          !isScrollingRef.current
-        ) {
-          const current =
-            smoothProgressRef.current;
-
-          const next =
-            clamp(
-              current +
-                AUTO_PLAY_SPEED /
-                  1000,
-              0,
-              1,
-            );
-
-          targetProgressRef.current =
-            next;
-        }
-
-        // ====================================================
-        // SMOOTH CINEMATIC TIMELINE
-        // ====================================================
-
-        const current =
-          smoothProgressRef.current;
-
-        const target =
-          targetProgressRef.current;
-
-        let nextProgress =
-          lerp(
-            current,
-            target,
-            SCRUB_EASE,
+        const currentProgress =
+          clamp(
+            timelineProgressRef.current,
+            0,
+            1,
           );
-
-        if (
-          Math.abs(
-            target -
-              nextProgress,
-          ) < 0.00002
-        ) {
-          nextProgress =
-            target;
-        }
-
-        smoothProgressRef.current =
-          nextProgress;
-
-        // ====================================================
-        // SCENE
-        // ====================================================
-
-        const sceneCount =
-          sceneAssets.length;
 
         const {
           sceneIndex,
           sceneProgress,
         } =
           getSceneProgress(
-            nextProgress,
-            sceneCount,
+            currentProgress,
+            sceneAssets.length,
           );
 
-        // ====================================================
-        // ACTIVE SCENE STATE
-        // ====================================================
+        const activeVideo =
+          videoRefs.current[
+            sceneIndex
+          ];
 
+        /*
+         * إيقاف الفيديوهات غير النشطة.
+         */
+        pauseInactiveVideos(
+          sceneIndex,
+        );
+
+        /*
+         * حساب frame الحالي.
+         *
+         * 50 frame تقريبًا.
+         */
+        const totalFrames =
+          50;
+
+        const frame =
+          Math.min(
+            totalFrames,
+            Math.max(
+              1,
+              Math.round(
+                currentProgress *
+                  (totalFrames - 1),
+              ) + 1,
+            ),
+          );
+
+        /*
+         * تحديث stage النصي.
+         */
+        const stage =
+          getStageForFrame(
+            frame,
+            heroStages,
+          );
+
+        const stageIndex =
+          heroStages.indexOf(
+            stage,
+          );
+
+        if (
+          stageIndex !==
+          lastStageRef.current
+        ) {
+          lastStageRef.current =
+            stageIndex;
+
+          setActiveStageFrame(
+            frame,
+          );
+        }
+
+        /*
+         * تحديث scene.
+         */
         if (
           sceneIndex !==
           lastSceneRef.current
@@ -936,182 +836,75 @@ export function Hero() {
           );
         }
 
-        // ====================================================
-        // CURRENT / ACTIVE VIDEO
-        // ====================================================
-
-        const currentVideo =
-          videoRefs.current[
-            sceneIndex
-          ];
+        /*
+         * تحديث الفيديو مباشرة.
+         */
+        if (activeVideo) {
+          updateVideo(
+            activeVideo,
+            sceneProgress,
+          );
+        }
 
         /*
-         * CRITICAL:
-         *
-         * Only the current scene is allowed to play.
-         * Every other mounted video is paused.
+         * crossfade بسيط بين المشاهد.
          */
-        pauseInactiveVideos(
-          sceneIndex,
-        );
-
-        if (currentVideo) {
-          if (
-            isScrollingRef.current
-          ) {
-            /*
-             * While scrolling:
-             * scroll position controls the video frame.
-             */
-            updateVideo(
-              currentVideo,
-              sceneProgress,
-            );
-          } else {
-            /*
-             * When scrolling stops:
-             * allow the active video to naturally play.
-             */
-            void playActiveVideo(
-              currentVideo,
-            );
-          }
-        }
-
-        // ====================================================
-        // NEXT VIDEO
-        // ====================================================
-
-        const nextSceneIndex =
-          Math.min(
-            sceneCount - 1,
-            sceneIndex + 1,
-          );
-
         const nextVideo =
           videoRefs.current[
-            nextSceneIndex
+            sceneIndex + 1
           ];
 
-        const crossfadeStart =
-          1 -
-          SCENE_CROSSFADE;
-
-        const transitionProgress =
+        if (
+          nextVideo &&
           sceneProgress >
-          crossfadeStart
-            ? clamp(
-                (sceneProgress -
-                  crossfadeStart) /
-                  SCENE_CROSSFADE,
-                0,
-                1,
-              )
-            : 0;
-
-        if (
-          nextVideo &&
-          nextSceneIndex !==
-            sceneIndex
+            1 - SCENE_CROSSFADE
         ) {
-          /*
-           * The next video is ALWAYS paused.
-           * It becomes playable only after it becomes
-           * the active scene.
-           */
-          nextVideo.pause();
-
-          if (
-            transitionProgress > 0
-          ) {
-            updateVideo(
-              nextVideo,
+          const fadeProgress =
+            clamp(
+              (sceneProgress -
+                (1 -
+                  SCENE_CROSSFADE)) /
+                SCENE_CROSSFADE,
               0,
-            );
-          }
-        }
-
-        // ====================================================
-        // ZOOM
-        // ====================================================
-
-        const currentScale =
-          1 +
-          sceneProgress *
-            ZOOM_AMOUNT;
-
-        const nextScale =
-          1 +
-          transitionProgress *
-            ZOOM_AMOUNT;
-
-        if (currentVideo) {
-          currentVideo.style.transform =
-            `scale(${currentScale})`;
-
-          currentVideo.style.opacity =
-            String(
-              1 -
-                transitionProgress,
-            );
-        }
-
-        if (
-          nextVideo &&
-          nextSceneIndex !==
-            sceneIndex
-        ) {
-          nextVideo.style.transform =
-            `scale(${nextScale})`;
-
-          nextVideo.style.opacity =
-            String(
-              transitionProgress,
-            );
-        }
-
-        // ====================================================
-        // HERO NARRATIVE STAGE
-        // ====================================================
-
-        const virtualFrame =
-          Math.min(
-            50,
-            Math.max(
               1,
-              Math.round(
-                nextProgress *
-                  49 +
-                  1,
-              ),
-            ),
-          );
+            );
 
-        if (
-          virtualFrame !==
-          lastStageRef.current
-        ) {
-          lastStageRef.current =
-            virtualFrame;
+          const nextSceneProgress =
+            fadeProgress;
 
-          setActiveStageFrame(
-            virtualFrame,
+          updateVideo(
+            nextVideo,
+            nextSceneProgress,
           );
         }
 
-        // ====================================================
-        // NEXT RAF
-        // ====================================================
+        /*
+         * عندما لا يوجد scroll،
+         * نسمح بحركة idle صغيرة جدًا.
+         */
+        if (
+          !isScrollingRef.current &&
+          activeVideo &&
+          videosReady &&
+          !reducedMotion
+        ) {
+          void playActiveVideo(
+            activeVideo,
+          );
+        }
 
+        /*
+         * استمرار RAF.
+         */
         animationFrameRef.current =
           window.requestAnimationFrame(
-            render,
+            renderTimeline,
           );
       };
 
     animationFrameRef.current =
       window.requestAnimationFrame(
-        render,
+        renderTimeline,
       );
 
     return () => {
@@ -1128,11 +921,60 @@ export function Hero() {
         animationFrameRef.current =
           null;
       }
+    };
+  }, [
+    pauseInactiveVideos,
+    playActiveVideo,
+    reducedMotion,
+    updateVideo,
+    videosReady,
+  ]);
 
-      /*
-       * Stop all videos when the Hero
-       * animation loop is destroyed.
-       */
+  // ==========================================================
+  // REDUCED MOTION
+  // ==========================================================
+
+  useEffect(() => {
+    if (!reducedMotion) {
+      return;
+    }
+
+    videoRefs.current.forEach(
+      (video) => {
+        if (
+          video &&
+          !video.paused
+        ) {
+          video.pause();
+        }
+      },
+    );
+  }, [reducedMotion]);
+
+  // ==========================================================
+  // CLEANUP
+  // ==========================================================
+
+  useEffect(() => {
+    return () => {
+      if (
+        animationFrameRef.current !==
+        null
+      ) {
+        window.cancelAnimationFrame(
+          animationFrameRef.current,
+        );
+      }
+
+      if (
+        scrollStopTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          scrollStopTimerRef.current,
+        );
+      }
+
       videoRefs.current.forEach(
         (video) => {
           if (video) {
@@ -1141,27 +983,13 @@ export function Hero() {
         },
       );
     };
-  }, [
-    videosReady,
-    pauseInactiveVideos,
-    playActiveVideo,
-    updateVideo,
-  ]);
+  }, []);
 
   // ==========================================================
-  // SCROLL LENGTH
+  // MEMOIZED VALUES
   // ==========================================================
 
-  const scrollLength =
-    isMobile
-      ? HERO_SCROLL_LENGTH_VH_MOBILE
-      : HERO_SCROLL_LENGTH_VH;
-
-  // ==========================================================
-  // ACTIVE STAGE
-  // ==========================================================
-
-  const activeStage =
+  const currentStage =
     useMemo(
       () =>
         getStageForFrame(
@@ -1171,82 +999,43 @@ export function Hero() {
       [activeStageFrame],
     );
 
-  // ==========================================================
-  // EMPTY VIDEO STATE
-  // ==========================================================
+  const scrollLength =
+    isMobile
+      ? HERO_SCROLL_LENGTH_VH_MOBILE
+      : HERO_SCROLL_LENGTH_VH;
 
-  if (
-    sceneAssets.length === 0
-  ) {
-    return (
-      <section
-        ref={ref}
-        className="
-          relative
-          w-full
-          bg-base
-          m-0
-          p-0
-        "
-        style={{
-          height: `${scrollLength}vh`,
-        }}
-      >
-        <div
-          className="
-            sticky
-            top-0
-            flex
-            h-screen
-            w-full
-            items-center
-            justify-center
-            bg-base
-          "
-        >
-          <HeroContent
-            stage={
-              heroStages[0]
-            }
-            reducedMotion={
-              reducedMotion
-            }
-          />
-        </div>
-      </section>
+  const currentProgress =
+    clamp(
+      timelineProgressRef.current,
+      0,
+      1,
     );
-  }
+
+  const scale =
+    1 +
+    currentProgress *
+      ZOOM_AMOUNT;
 
   // ==========================================================
-  // HERO
+  // RENDER
   // ==========================================================
 
   return (
     <section
       ref={ref}
-      className="
-        relative
-        w-full
-        bg-base
-        m-0
-        p-0
-      "
+      className="relative"
       style={{
         height: `${scrollLength}vh`,
       }}
-      aria-label="جِذع AI — منظومة الحلول الذكية"
     >
       <div
         className="
           sticky
           top-0
-          left-0
           h-screen
           w-full
           overflow-hidden
-          bg-base
-          m-0
-          p-0
+          bg-black
         "
       >
         {/* ==================================================
@@ -1257,11 +1046,8 @@ export function Hero() {
           className="
             absolute
             inset-0
-            z-0
-            h-full
-            w-full
             overflow-hidden
-            bg-base
+            bg-black
           "
         >
           {sceneAssets.map(
@@ -1276,13 +1062,6 @@ export function Hero() {
               const isNext =
                 index ===
                 activeScene + 1;
-
-              if (
-                !isCurrent &&
-                !isNext
-              ) {
-                return null;
-              }
 
               return (
                 <video
@@ -1314,9 +1093,11 @@ export function Hero() {
                     opacity:
                       isCurrent
                         ? 1
-                        : 0,
+                        : isNext
+                          ? 0.001
+                          : 0,
                     transform:
-                      "scale(1)",
+                      `scale(${scale})`,
                   }}
                 />
               );
@@ -1325,132 +1106,146 @@ export function Hero() {
         </div>
 
         {/* ==================================================
-            CINEMATIC GLASS LAYER
+            DARK CINEMATIC OVERLAY
             ================================================== */}
 
         <div
           className="
-            pointer-events-none
             absolute
             inset-0
-            z-[2]
-            bg-white/[0.06]
-            backdrop-blur-[2px]
-            border
-            border-white/[0.14]
+            bg-black/25
+            pointer-events-none
           "
         />
 
+        {/* ==================================================
+            GRADIENT
+            ================================================== */}
+
         <div
           className="
-            pointer-events-none
             absolute
             inset-0
-            z-[3]
-            bg-gradient-to-l
-            from-white/75
-            via-white/20
-            to-transparent
-          "
-        />
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-x-0
-            bottom-0
-            z-[3]
-            h-72
-            bg-gradient-to-t
-            from-white/85
-            via-white/30
-            to-transparent
-          "
-        />
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-x-0
-            top-0
-            z-[3]
-            h-40
             bg-gradient-to-b
-            from-white/70
-            to-transparent
+            from-black/45
+            via-transparent
+            to-black/65
+            pointer-events-none
           "
         />
 
         {/* ==================================================
-            NETWORK LINE
-            ================================================== */}
-
-        <svg
-          className="
-            pointer-events-none
-            absolute
-            -top-10
-            left-1/2
-            z-[4]
-            w-[180%]
-            max-w-3xl
-            -translate-x-1/2
-            opacity-25
-            sm:w-[140%]
-          "
-          viewBox="0 0 600 300"
-          fill="none"
-          aria-hidden="true"
-        >
-          <motion.path
-            d="
-              M 20 250
-              C 150 250,
-              180 60,
-              320 80
-              C 430 95,
-              460 220,
-              580 200
-            "
-            stroke="#C89B5C"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            initial={{
-              pathLength: 0,
-            }}
-            animate={{
-              pathLength: 1,
-            }}
-            transition={{
-              duration:
-                reducedMotion
-                  ? 0
-                  : 1.6,
-              ease: [
-                0.22,
-                1,
-                0.36,
-                1,
-              ],
-            }}
-          />
-        </svg>
-
-        {/* ==================================================
-            VIGNETTE
+            SIDE VIGNETTE
             ================================================== */}
 
         <div
           className="
-            pointer-events-none
             absolute
             inset-0
-            z-[4]
-            bg-[radial-gradient(circle_at_center,transparent_40%,rgba(255,255,255,0.28)_100%)]
+            bg-[radial-gradient(
+              ellipse_at_center,
+              transparent_35%,
+              rgba(0,0,0,0.45)_100%
+            )]
+            pointer-events-none
           "
         />
+
+        {/* ==================================================
+            NETWORK SVG / DECORATION
+            ================================================== */}
+
+        <div
+          className="
+            absolute
+            inset-0
+            pointer-events-none
+            opacity-20
+          "
+        >
+          <svg
+            viewBox="0 0 1000 700"
+            className="
+              h-full
+              w-full
+            "
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient
+                id="heroNetworkGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="currentColor"
+                  stopOpacity="0"
+                />
+
+                <stop
+                  offset="50%"
+                  stopColor="currentColor"
+                  stopOpacity="0.45"
+                />
+
+                <stop
+                  offset="100%"
+                  stopColor="currentColor"
+                  stopOpacity="0"
+                />
+              </linearGradient>
+            </defs>
+
+            <path
+              d="
+                M0 480
+                C180 390 220 500 360 390
+                S610 250 760 340
+                S900 440 1000 300
+              "
+              fill="none"
+              stroke="url(#heroNetworkGradient)"
+              strokeWidth="1"
+            />
+
+            <path
+              d="
+                M0 580
+                C160 500 270 600 410 480
+                S650 350 800 430
+                S910 500 1000 420
+              "
+              fill="none"
+              stroke="url(#heroNetworkGradient)"
+              strokeWidth="1"
+            />
+
+            <circle
+              cx="360"
+              cy="390"
+              r="3"
+              fill="currentColor"
+            />
+
+            <circle
+              cx="760"
+              cy="340"
+              r="3"
+              fill="currentColor"
+            />
+
+            <circle
+              cx="800"
+              cy="430"
+              r="2"
+              fill="currentColor"
+            />
+          </svg>
+        </div>
 
         {/* ==================================================
             CONTENT
@@ -1458,400 +1253,347 @@ export function Hero() {
 
         <div
           className="
-            absolute
-            inset-0
-            z-10
-            h-screen
-            w-full
-            container-page
-            section-px
+            relative
+            z-20
             flex
+            h-full
+            w-full
             items-center
-            m-0
           "
         >
-          <AnimatePresence
-            mode="wait"
-            initial={false}
+          <div
+            className="
+              mx-auto
+              w-full
+              max-w-7xl
+              px-5
+              sm:px-8
+              lg:px-12
+            "
           >
-            <motion.div
-              key={`${activeStage.startFrame}-${activeStage.endFrame}`}
-              className="w-full"
-              initial={
-                reducedMotion
-                  ? {
-                      opacity: 1,
-                      y: 0,
-                      filter:
-                        "blur(0px)",
-                    }
-                  : {
-                      opacity: 0,
-                      y: 18,
-                      filter:
-                        "blur(3px)",
-                    }
-              }
-              animate={{
-                opacity: 1,
-                y: 0,
-                filter:
-                  "blur(0px)",
-              }}
-              exit={
-                reducedMotion
-                  ? {
-                      opacity: 1,
-                      y: 0,
-                      filter:
-                        "blur(0px)",
-                    }
-                  : {
-                      opacity: 0,
-                      y: -14,
-                      filter:
-                        "blur(2px)",
-                    }
-              }
-              transition={
-                reducedMotion
-                  ? {
-                      duration: 0,
-                    }
-                  : {
-                      enter: {
-                        duration:
-                          0.55,
-                        ease: [
-                          0.22,
-                          1,
-                          0.36,
-                          1,
-                        ],
-                      },
-                      exit: {
-                        duration:
-                          0.28,
-                        ease: [
-                          0.4,
-                          0,
-                          1,
-                          1,
-                        ],
-                      },
-                    }
-              }
+            <AnimatePresence
+              mode="wait"
+              initial={false}
             >
-              <HeroContent
-                stage={
-                  activeStage
+              <motion.div
+                key={
+                  currentStage
+                    ?.startFrame ??
+                  activeStageFrame
                 }
-                reducedMotion={
-                  reducedMotion
-                }
-              />
-            </motion.div>
-          </AnimatePresence>
+                initial={{
+                  opacity: 0,
+                  y: 12,
+                  filter:
+                    "blur(2px)",
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  filter:
+                    "blur(0px)",
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -8,
+                  filter:
+                    "blur(1px)",
+                }}
+                transition={{
+                  duration: 0.12,
+                  ease: "easeOut",
+                }}
+                className="
+                  max-w-3xl
+                  text-right
+                  ml-auto
+                "
+                dir="rtl"
+              >
+                {/* ==========================================
+                    EYEBROW
+                    ========================================== */}
+
+                <div
+                  className="
+                    mb-5
+                    inline-flex
+                    items-center
+                    rounded-full
+                    border
+                    border-white/15
+                    bg-white/10
+                    px-4
+                    py-2
+                    text-xs
+                    font-medium
+                    text-white/80
+                    backdrop-blur-md
+                  "
+                >
+                  <span
+                    className="
+                      mr-2
+                      h-1.5
+                      w-1.5
+                      rounded-full
+                      bg-white
+                    "
+                  />
+
+                  {heroContent.eyebrow}
+                </div>
+
+                {/* ==========================================
+                    LABEL
+                    ========================================== */}
+
+                <div
+                  className="
+                    mb-4
+                    text-sm
+                    font-medium
+                    tracking-wide
+                    text-white/65
+                  "
+                >
+                  {currentStage?.label}
+                </div>
+
+                {/* ==========================================
+                    MAIN HEADLINE
+                    ========================================== */}
+
+                <h1
+                  className="
+                    text-4xl
+                    font-bold
+                    leading-[1.12]
+                    tracking-tight
+                    text-white
+                    sm:text-5xl
+                    lg:text-6xl
+                    xl:text-7xl
+                  "
+                >
+                  {currentStage?.headline}
+                </h1>
+
+                {/* ==========================================
+                    SUBHEADLINE
+                    ========================================== */}
+
+                <p
+                  className="
+                    mt-6
+                    max-w-2xl
+                    text-base
+                    leading-8
+                    text-white/75
+                    sm:text-lg
+                    lg:text-xl
+                  "
+                >
+                  {
+                    currentStage?.subheadline
+                  }
+                </p>
+
+                {/* ==========================================
+                    CTA
+                    ========================================== */}
+
+                <div
+                  className="
+                    mt-8
+                    flex
+                    flex-wrap
+                    items-center
+                    justify-start
+                    gap-3
+                  "
+                >
+                  <Button
+                    to="/طلب-استشارة"
+                  >
+                    {
+                      heroContent.ctaPrimary
+                    }
+                  </Button>
+
+                  <Button
+                    to="/كيف-نعمل"
+                    variant="secondary"
+                  >
+                    {
+                      heroContent.ctaSecondary
+                    }
+                  </Button>
+                </div>
+
+                {/* ==========================================
+                    MICROCOPY
+                    ========================================== */}
+
+                {"microcopy" in
+                  heroContent &&
+                  heroContent.microcopy && (
+                    <div
+                      className="
+                        mt-4
+                        text-xs
+                        text-white/50
+                        sm:text-sm
+                      "
+                    >
+                      {
+                        heroContent.microcopy
+                      }
+                    </div>
+                  )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* ==================================================
-            LOADING
+            BRAND / TOP
             ================================================== */}
 
-        {!videosReady && (
+        <div
+          className="
+            absolute
+            left-5
+            right-5
+            top-5
+            z-30
+            flex
+            items-center
+            justify-between
+            sm:left-8
+            sm:right-8
+            sm:top-8
+            lg:left-12
+            lg:right-12
+          "
+          dir="rtl"
+        >
           <div
             className="
-              pointer-events-none
-              absolute
-              bottom-8
-              right-8
-              z-20
-              hidden
-              text-xs
-              text-ink/40
-              sm:block
-              font-english
+              text-lg
+              font-bold
+              tracking-tight
+              text-white
+              sm:text-xl
             "
           >
-            Loading
+            {heroContent.brand}
           </div>
-        )}
+
+          <div
+            className="
+              hidden
+              text-xs
+              text-white/50
+              sm:block
+            "
+          >
+            {heroContent.scrollLabel}
+          </div>
+        </div>
+
+        {/* ==================================================
+            SCROLL INDICATOR
+            ================================================== */}
+
+        <div
+          className="
+            absolute
+            bottom-6
+            left-1/2
+            z-30
+            -translate-x-1/2
+            text-center
+          "
+          dir="rtl"
+        >
+          <div
+            className="
+              mb-2
+              text-[10px]
+              font-medium
+              tracking-wider
+              text-white/50
+            "
+          >
+            {heroContent.scrollLabel}
+          </div>
+
+          <div
+            className="
+              mx-auto
+              h-8
+              w-px
+              overflow-hidden
+              bg-white/20
+            "
+          >
+            <motion.div
+              animate={{
+                y: [0, 16, 0],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="
+                h-3
+                w-full
+                bg-white/80
+              "
+            />
+          </div>
+        </div>
+
+        {/* ==================================================
+            PROGRESS INDICATOR
+            ================================================== */}
+
+        <div
+          className="
+            absolute
+            bottom-8
+            right-5
+            z-30
+            hidden
+            h-32
+            w-px
+            overflow-hidden
+            bg-white/15
+            sm:right-8
+            sm:block
+            lg:right-12
+          "
+        >
+          <div
+            className="
+              absolute
+              left-0
+              top-0
+              w-full
+              bg-white/80
+              transition-none
+            "
+            style={{
+              height: `${
+                currentProgress *
+                100
+              }%`,
+            }}
+          />
+        </div>
       </div>
     </section>
-  );
-}
-
-// ============================================================
-// HERO CONTENT
-// ============================================================
-
-type HeroContentProps = {
-  stage: HeroStage;
-  reducedMotion?: boolean;
-};
-
-function HeroContent({
-  stage,
-  reducedMotion = false,
-}: HeroContentProps) {
-  return (
-    <div
-      className="
-        w-full
-        max-w-4xl
-        mx-auto
-        flex
-        flex-col
-        items-center
-        text-center
-        px-2
-        sm:px-0
-        py-0
-      "
-    >
-      {/* ==================================================
-          STAGE LABEL
-          ================================================== */}
-
-      <motion.div
-        initial={
-          reducedMotion
-            ? {
-                opacity: 1,
-                y: 0,
-              }
-            : {
-                opacity: 0,
-                y: 10,
-              }
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration:
-            reducedMotion
-              ? 0
-              : 0.4,
-        }}
-        className="
-          mb-5
-          flex
-          items-center
-          justify-center
-          gap-3
-          text-center
-          text-sm
-          font-medium
-          text-brass
-        "
-      >
-        <span
-          className="
-            h-px
-            w-8
-            sm:w-10
-            bg-brass/70
-          "
-        />
-
-        <span>
-          {stage.label}
-        </span>
-
-        <span
-          className="
-            h-px
-            w-8
-            sm:w-10
-            bg-brass/70
-          "
-        />
-      </motion.div>
-
-      {/* ==================================================
-          HEADLINE
-          ================================================== */}
-
-      <motion.h1
-        initial={
-          reducedMotion
-            ? {
-                opacity: 1,
-                y: 0,
-                filter:
-                  "blur(0px)",
-              }
-            : {
-                opacity: 0,
-                y: 20,
-                filter:
-                  "blur(3px)",
-              }
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-          filter:
-            "blur(0px)",
-        }}
-        transition={{
-          duration:
-            reducedMotion
-              ? 0
-              : 0.55,
-          delay:
-            reducedMotion
-              ? 0
-              : 0.04,
-          ease: [
-            0.22,
-            1,
-            0.36,
-            1,
-          ],
-        }}
-        className="
-          w-full
-          max-w-4xl
-          mx-auto
-          font-display
-          font-bold
-          text-3xl
-          leading-[1.12]
-          tracking-tight
-          text-center
-          text-ink
-          sm:text-5xl
-          lg:text-7xl
-          drop-shadow-[0_5px_30px_rgba(23,23,23,0.12)]
-        "
-      >
-        {stage.headline}
-      </motion.h1>
-
-      {/* ==================================================
-          SUBHEADLINE
-          ================================================== */}
-
-      <motion.p
-        initial={
-          reducedMotion
-            ? {
-                opacity: 1,
-                y: 0,
-                filter:
-                  "blur(0px)",
-              }
-            : {
-                opacity: 0,
-                y: 16,
-                filter:
-                  "blur(3px)",
-              }
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-          filter:
-            "blur(0px)",
-        }}
-        transition={{
-          duration:
-            reducedMotion
-              ? 0
-              : 0.55,
-          delay:
-            reducedMotion
-              ? 0
-              : 0.13,
-          ease: [
-            0.22,
-            1,
-            0.36,
-            1,
-          ],
-        }}
-        className="
-          mt-5
-          sm:mt-6
-          w-full
-          max-w-2xl
-          mx-auto
-          px-2
-          text-center
-          text-base
-          leading-relaxed
-          text-ink/70
-          sm:text-xl
-          lg:text-2xl
-          drop-shadow-[0_3px_18px_rgba(23,23,23,0.10)]
-        "
-      >
-        {stage.subheadline}
-      </motion.p>
-
-      {/* ==================================================
-          CTA
-          ================================================== */}
-
-      <motion.div
-        initial={
-          reducedMotion
-            ? {
-                opacity: 1,
-                y: 0,
-              }
-            : {
-                opacity: 0,
-                y: 14,
-              }
-        }
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration:
-            reducedMotion
-              ? 0
-              : 0.5,
-          delay:
-            reducedMotion
-              ? 0
-              : 0.2,
-          ease: [
-            0.22,
-            1,
-            0.36,
-            1,
-          ],
-        }}
-        className="
-          mt-7
-          sm:mt-8
-          flex
-          flex-col
-          items-center
-          justify-center
-          gap-3
-          sm:flex-row
-          sm:gap-4
-          sm:justify-center
-        "
-      >
-        <Button to="/طلب-استشارة">
-          {heroContent.ctaPrimary}
-        </Button>
-
-        <Button
-          to="/كيف-نعمل"
-          variant="secondary"
-        >
-          {heroContent.ctaSecondary}
-        </Button>
-      </motion.div>
-    </div>
   );
 }

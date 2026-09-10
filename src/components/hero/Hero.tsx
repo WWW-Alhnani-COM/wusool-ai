@@ -176,6 +176,8 @@ export function Hero() {
 
     let cancelled = false;
 
+    setPreloaded(false);
+
     const preloadImages = async () => {
       const results =
         await Promise.all(
@@ -553,63 +555,12 @@ export function Hero() {
   }
 
   // ==========================================================
-  // REDUCED MOTION
-  // ==========================================================
-
-  if (reducedMotion) {
-    return (
-      <section
-        className="
-          relative
-          min-h-screen
-          w-full
-          overflow-hidden
-          bg-base
-          m-0
-          p-0
-        "
-        aria-label="جِذع AI"
-      >
-        <img
-          src={frames[0].src}
-          alt={frames[0].alt}
-          loading="eager"
-          decoding="async"
-          className="
-            absolute
-            inset-0
-            h-full
-            w-full
-            object-cover
-          "
-        />
-
-        <HeroOverlays />
-
-        <div
-          className="
-            relative
-            z-10
-            min-h-screen
-            container-page
-            section-px
-            flex
-            items-center
-            m-0
-            p-0
-          "
-        >
-          <HeroContent
-            stage={heroStages[0]}
-            reducedMotion
-          />
-        </div>
-      </section>
-    );
-  }
-
-  // ==========================================================
   // CINEMATIC HERO
+  //
+  // IMPORTANT:
+  // Do NOT return a static Hero when reducedMotion is enabled.
+  // The scroll sequence must remain functional on mobile.
+  // reducedMotion is used only for text/decorative animation.
   // ==========================================================
 
   return (
@@ -701,49 +652,76 @@ export function Hero() {
             <motion.div
               key={`${activeStage.startFrame}-${activeStage.endFrame}`}
               className="w-full"
-              initial={{
-                opacity: 0,
-                y: 18,
-                filter:
-                  "blur(3px)",
-              }}
+              initial={
+                reducedMotion
+                  ? {
+                      opacity: 1,
+                      y: 0,
+                      filter:
+                        "blur(0px)",
+                    }
+                  : {
+                      opacity: 0,
+                      y: 18,
+                      filter:
+                        "blur(3px)",
+                    }
+              }
               animate={{
                 opacity: 1,
                 y: 0,
                 filter:
                   "blur(0px)",
               }}
-              exit={{
-                opacity: 0,
-                y: -14,
-                filter:
-                  "blur(2px)",
-              }}
-              transition={{
-                enter: {
-                  duration:
-                    TEXT_ENTER_DURATION,
-                  ease: [
-                    0.22,
-                    1,
-                    0.36,
-                    1,
-                  ],
-                },
-                exit: {
-                  duration:
-                    TEXT_EXIT_DURATION,
-                  ease: [
-                    0.4,
-                    0,
-                    1,
-                    1,
-                  ],
-                },
-              }}
+              exit={
+                reducedMotion
+                  ? {
+                      opacity: 1,
+                      y: 0,
+                      filter:
+                        "blur(0px)",
+                    }
+                  : {
+                      opacity: 0,
+                      y: -14,
+                      filter:
+                        "blur(2px)",
+                    }
+              }
+              transition={
+                reducedMotion
+                  ? {
+                      duration: 0,
+                    }
+                  : {
+                      enter: {
+                        duration:
+                          TEXT_ENTER_DURATION,
+                        ease: [
+                          0.22,
+                          1,
+                          0.36,
+                          1,
+                        ],
+                      },
+                      exit: {
+                        duration:
+                          TEXT_EXIT_DURATION,
+                        ease: [
+                          0.4,
+                          0,
+                          1,
+                          1,
+                        ],
+                      },
+                    }
+              }
             >
               <HeroContent
                 stage={activeStage}
+                reducedMotion={
+                  reducedMotion
+                }
               />
             </motion.div>
           </AnimatePresence>
@@ -825,7 +803,10 @@ function HeroContent({
           y: 0,
         }}
         transition={{
-          duration: 0.4,
+          duration:
+            reducedMotion
+              ? 0
+              : 0.4,
         }}
         className="
           mb-5
@@ -889,8 +870,14 @@ function HeroContent({
             "blur(0px)",
         }}
         transition={{
-          duration: 0.55,
-          delay: 0.04,
+          duration:
+            reducedMotion
+              ? 0
+              : 0.55,
+          delay:
+            reducedMotion
+              ? 0
+              : 0.04,
           ease: [
             0.22,
             1,
@@ -944,8 +931,14 @@ function HeroContent({
             "blur(0px)",
         }}
         transition={{
-          duration: 0.55,
-          delay: 0.13,
+          duration:
+            reducedMotion
+              ? 0
+              : 0.55,
+          delay:
+            reducedMotion
+              ? 0
+              : 0.13,
           ease: [
             0.22,
             1,
@@ -993,8 +986,14 @@ function HeroContent({
           y: 0,
         }}
         transition={{
-          duration: 0.5,
-          delay: 0.2,
+          duration:
+            reducedMotion
+              ? 0
+              : 0.5,
+          delay:
+            reducedMotion
+              ? 0
+              : 0.2,
           ease: [
             0.22,
             1,
@@ -1130,7 +1129,8 @@ function HeroOverlays() {
             pathLength: 1,
           }}
           transition={{
-            duration: 1.6,
+            duration:
+              reducedMotionSafeDuration(),
             ease: [
               0.22,
               1,
@@ -1156,4 +1156,18 @@ function HeroOverlays() {
       />
     </>
   );
+}
+
+function reducedMotionSafeDuration() {
+  if (
+    typeof window === "undefined"
+  ) {
+    return 1.6;
+  }
+
+  return window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches
+    ? 0
+    : 1.6;
 }

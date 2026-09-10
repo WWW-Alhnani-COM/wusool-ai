@@ -411,6 +411,13 @@ export function Hero() {
               video.playsInline = true;
               video.preload = "auto";
 
+              /*
+               * Every video must be independently
+               * controlled by the Hero timeline.
+               */
+              video.autoplay = false;
+              video.loop = false;
+
               video.load();
 
               if (
@@ -601,6 +608,24 @@ export function Hero() {
 
           virtualAnchorProgressRef.current =
             smoothProgressRef.current;
+
+          /*
+           * Pause the active video immediately when the
+           * user starts scrubbing.
+           *
+           * This prevents natural playback from fighting
+           * with scroll-driven currentTime updates.
+           */
+          videoRefs.current.forEach(
+            (video) => {
+              if (
+                video &&
+                !video.paused
+              ) {
+                video.pause();
+              }
+            },
+          );
         }
 
         // ----------------------------------------------------
@@ -742,16 +767,65 @@ export function Hero() {
     );
 
   // ==========================================================
-  // KEEP VIDEO PAUSED
+  // PAUSE INACTIVE VIDEOS
   // ==========================================================
 
-  const keepVideoPaused =
+  const pauseInactiveVideos =
     useCallback(
       (
-        video: HTMLVideoElement,
+        activeIndex: number,
       ) => {
-        if (!video.paused) {
-          video.pause();
+        videoRefs.current.forEach(
+          (
+            video,
+            index,
+          ) => {
+            if (
+              video &&
+              index !== activeIndex &&
+              !video.paused
+            ) {
+              video.pause();
+            }
+          },
+        );
+      },
+      [],
+    );
+
+  // ==========================================================
+  // PLAY ACTIVE VIDEO
+  // ==========================================================
+
+  const playActiveVideo =
+    useCallback(
+      async (
+        video:
+          | HTMLVideoElement
+          | undefined,
+      ) => {
+        if (!video) {
+          return;
+        }
+
+        video.muted = true;
+        video.playsInline = true;
+        video.autoplay = false;
+
+        if (
+          !video.paused
+        ) {
+          return;
+        }
+
+        try {
+          await video.play();
+        } catch {
+          /*
+           * Browser autoplay policy may prevent
+           * playback. Since the video is muted,
+           * modern browsers normally allow it.
+           */
         }
       },
       [],
@@ -778,7 +852,7 @@ export function Hero() {
         }
 
         // ====================================================
-        // AUTOPLAY WHEN NOT SCROLLING
+        // AUTOPLAY TIMELINE WHEN NOT SCROLLING
         // ====================================================
 
         if (
@@ -863,7 +937,7 @@ export function Hero() {
         }
 
         // ====================================================
-        // CURRENT VIDEO
+        // CURRENT / ACTIVE VIDEO
         // ====================================================
 
         const currentVideo =
@@ -871,15 +945,37 @@ export function Hero() {
             sceneIndex
           ];
 
-        if (currentVideo) {
-          keepVideoPaused(
-            currentVideo,
-          );
+        /*
+         * CRITICAL:
+         *
+         * Only the current scene is allowed to play.
+         * Every other mounted video is paused.
+         */
+        pauseInactiveVideos(
+          sceneIndex,
+        );
 
-          updateVideo(
-            currentVideo,
-            sceneProgress,
-          );
+        if (currentVideo) {
+          if (
+            isScrollingRef.current
+          ) {
+            /*
+             * While scrolling:
+             * scroll position controls the video frame.
+             */
+            updateVideo(
+              currentVideo,
+              sceneProgress,
+            );
+          } else {
+            /*
+             * When scrolling stops:
+             * allow the active video to naturally play.
+             */
+            void playActiveVideo(
+              currentVideo,
+            );
+          }
         }
 
         // ====================================================
@@ -898,7 +994,8 @@ export function Hero() {
           ];
 
         const crossfadeStart =
-          1 - SCENE_CROSSFADE;
+          1 -
+          SCENE_CROSSFADE;
 
         const transitionProgress =
           sceneProgress >
@@ -917,9 +1014,12 @@ export function Hero() {
           nextSceneIndex !==
             sceneIndex
         ) {
-          keepVideoPaused(
-            nextVideo,
-          );
+          /*
+           * The next video is ALWAYS paused.
+           * It becomes playable only after it becomes
+           * the active scene.
+           */
+          nextVideo.pause();
 
           if (
             transitionProgress > 0
@@ -1028,10 +1128,23 @@ export function Hero() {
         animationFrameRef.current =
           null;
       }
+
+      /*
+       * Stop all videos when the Hero
+       * animation loop is destroyed.
+       */
+      videoRefs.current.forEach(
+        (video) => {
+          if (video) {
+            video.pause();
+          }
+        },
+      );
     };
   }, [
     videosReady,
-    keepVideoPaused,
+    pauseInactiveVideos,
+    playActiveVideo,
     updateVideo,
   ]);
 
@@ -1184,6 +1297,8 @@ export function Hero() {
                   muted
                   playsInline
                   preload="auto"
+                  autoPlay={false}
+                  loop={false}
                   aria-hidden="true"
                   className="
                     absolute

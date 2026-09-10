@@ -596,17 +596,9 @@ export function Hero() {
           isScrollingRef.current =
             true;
 
-          /**
-           * Remember the page position where
-           * this gesture started.
-           */
           scrollAnchorProgressRef.current =
             nextProgress;
 
-          /**
-           * Remember the cinematic position
-           * where this gesture started.
-           */
           virtualAnchorProgressRef.current =
             smoothProgressRef.current;
         }
@@ -650,10 +642,6 @@ export function Hero() {
               isScrollingRef.current =
                 false;
 
-              /**
-               * Autoplay continues from exactly
-               * where the cinematic timeline is.
-               */
               virtualAnchorProgressRef.current =
                 smoothProgressRef.current;
 
@@ -986,10 +974,6 @@ export function Hero() {
         // HERO NARRATIVE STAGE
         // ====================================================
 
-        /**
-         * Map cinematic progress to
-         * the existing 50-frame narrative.
-         */
         const virtualFrame =
           Math.min(
             50,
@@ -1226,7 +1210,7 @@ export function Hero() {
         </div>
 
         {/* ==================================================
-            CINEMATIC COLOR LAYER
+            CINEMATIC GLASS LAYER
             ================================================== */}
 
         <div
@@ -1235,7 +1219,10 @@ export function Hero() {
             absolute
             inset-0
             z-[2]
-            bg-white/10
+            bg-white/[0.06]
+            backdrop-blur-[2px]
+            border
+            border-white/[0.14]
           "
         />
 

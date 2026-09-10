@@ -571,7 +571,7 @@ export function Hero() {
         aria-label="جِذع AI"
       >
         <img
-          src={frames[0].src]}
+          src={frames[0].src}
           alt={frames[0].alt}
           loading="eager"
           decoding="async"

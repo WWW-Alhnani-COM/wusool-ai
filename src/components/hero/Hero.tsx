@@ -41,7 +41,6 @@ const ZOOM_AMOUNT = 0.095;
 const SCENE_CROSSFADE = 0.12;
 
 // سرعة autoplay الخفيفة جدًا عند عدم التمرير.
-const AUTO_PLAY_SPEED = 0.000018;
 
 // يستخدم فقط لمعرفة انتهاء حركة التمرير.
 // لا يؤخر الـ scroll نفسه.

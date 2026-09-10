@@ -1321,40 +1321,7 @@ export function Hero() {
 "
                 dir="rtl"
               >
-                {/* ==========================================
-                    EYEBROW
-                    ========================================== */}
-
-                <div
-                  className="
-                    mb-5
-                    inline-flex
-                    items-center
-                    rounded-full
-                    border
-                    border-white/15
-                    bg-white/10
-                    px-4
-                    py-2
-                    text-xs
-                    font-medium
-                    text-white/80
-                    backdrop-blur-md
-                  "
-                >
-                  <span
-                    className="
-                      mr-2
-                      h-1.5
-                      w-1.5
-                      rounded-full
-                      bg-white
-                    "
-                  />
-
-                  {heroContent.eyebrow}
-                </div>
-
+    
                 {/* ==========================================
                     LABEL
                     ========================================== */}

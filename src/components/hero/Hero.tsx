@@ -19,52 +19,40 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useIsLowPowerDevice } from "@/hooks/useIsLowPowerDevice";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 
 // ============================================================
 // CONFIGURATION
 // ============================================================
 
-const HERO_SCROLL_LENGTH_VH =
-  560;
+const HERO_SCROLL_LENGTH_VH = 560;
 
-const HERO_SCROLL_LENGTH_VH_MOBILE =
-  480;
+const HERO_SCROLL_LENGTH_VH_MOBILE = 480;
 
 // ------------------------------------------------------------
 // Cinematic motion
 // ------------------------------------------------------------
 
-const AUTO_PLAY_SPEED =
-  0.018;
+const AUTO_PLAY_SPEED = 0.018;
 
-const SCRUB_EASE =
-  0.045;
+const SCRUB_EASE = 0.045;
 
-const VIDEO_TIME_EASE =
-  0.085;
+const VIDEO_TIME_EASE = 0.085;
 
-const ZOOM_AMOUNT =
-  0.095;
+const ZOOM_AMOUNT = 0.095;
 
 // Last percentage of each scene used for crossfade.
-const SCENE_CROSSFADE =
-  0.12;
+const SCENE_CROSSFADE = 0.12;
 
 // Scroll gesture multiplier.
-// Higher = scroll moves cinematic timeline faster.
-const SCROLL_GESTURE_GAIN =
-  1.15;
+const SCROLL_GESTURE_GAIN = 1.15;
 
 // Delay before considering scrolling stopped.
-const SCROLL_STOP_DELAY =
-  120;
+const SCROLL_STOP_DELAY = 120;
 
-// Minimum movement required before
-// considering a gesture an actual scroll.
-const SCROLL_EPSILON =
-  0.00005;
+// Minimum movement required before considering
+// a gesture an actual scroll.
+const SCROLL_EPSILON = 0.00005;
 
 // ============================================================
 // TYPES
@@ -73,12 +61,6 @@ const SCROLL_EPSILON =
 type SceneAsset = {
   id: string;
   src: string;
-};
-
-type VideoLayerState = {
-  index: number;
-  opacity: number;
-  scale: number;
 };
 
 // ============================================================
@@ -103,8 +85,7 @@ function lerp(
 ) {
   return (
     current +
-    (target - current) *
-      amount
+    (target - current) * amount
   );
 }
 
@@ -115,10 +96,8 @@ function getStageForFrame(
   return (
     stages.find(
       (stage) =>
-        frame >=
-          stage.startFrame &&
-        frame <=
-          stage.endFrame,
+        frame >= stage.startFrame &&
+        frame <= stage.endFrame,
     ) ?? stages[0]
   );
 }
@@ -133,18 +112,14 @@ function getSceneLocalProgress(
   }
 
   const sceneStart =
-    sceneIndex /
-    sceneCount;
+    sceneIndex / sceneCount;
 
   const sceneEnd =
-    (sceneIndex + 1) /
-    sceneCount;
+    (sceneIndex + 1) / sceneCount;
 
   return clamp(
-    (timelineProgress -
-      sceneStart) /
-      (sceneEnd -
-        sceneStart),
+    (timelineProgress - sceneStart) /
+      (sceneEnd - sceneStart),
     0,
     1,
   );
@@ -165,8 +140,7 @@ function getSceneIndex(
         timelineProgress,
         0,
         0.999999,
-      ) *
-        sceneCount,
+      ) * sceneCount,
     ),
   );
 }
@@ -210,9 +184,7 @@ const videoModules =
   >;
 
 const sceneAssets: SceneAsset[] =
-  Object.entries(
-    videoModules,
-  )
+  Object.entries(videoModules)
     .sort(([a], [b]) =>
       a.localeCompare(b),
     )
@@ -225,8 +197,7 @@ const sceneAssets: SceneAsset[] =
             ?.replace(
               ".mp4",
               "",
-            ) ??
-          path,
+            ) ?? path,
         src,
       }),
     );
@@ -238,9 +209,6 @@ const sceneAssets: SceneAsset[] =
 export function Hero() {
   const reducedMotion =
     useReducedMotion();
-
-  const lowPower =
-    useIsLowPowerDevice();
 
   const {
     ref,
@@ -288,7 +256,8 @@ export function Hero() {
   /**
    * Current cinematic position.
    *
-   * This is NOT directly equal to scroll progress.
+   * This is intentionally NOT directly equal
+   * to the page scroll progress.
    */
   const smoothProgressRef =
     useRef(0);
@@ -306,31 +275,24 @@ export function Hero() {
     useRef(0);
 
   /**
-   * Progress when the current
+   * Page progress when the current
    * scroll gesture started.
    */
   const scrollAnchorProgressRef =
     useRef(0);
 
   /**
-   * Cinematic position when the
-   * current scroll gesture started.
+   * Cinematic position when the current
+   * scroll gesture started.
    */
   const virtualAnchorProgressRef =
     useRef(0);
 
   /**
-   * Whether the user is currently
-   * interacting with scroll.
+   * Whether the user is currently scrolling.
    */
   const isScrollingRef =
     useRef(false);
-
-  /**
-   * Last scroll event timestamp.
-   */
-  const lastScrollTimeRef =
-    useRef(0);
 
   /**
    * RAF.
@@ -339,21 +301,19 @@ export function Hero() {
     useRef<number | null>(null);
 
   /**
-   * Timeout used to detect
-   * scroll stop.
+   * Timer used to detect scroll stop.
    */
   const scrollStopTimerRef =
     useRef<number | null>(null);
 
   /**
-   * Prevent duplicate scroll
-   * initialization.
+   * Prevent duplicate scroll initialization.
    */
   const scrollInitializedRef =
     useRef(false);
 
   /**
-   * Prevent excessive React state updates.
+   * Prevent unnecessary React stage updates.
    */
   const lastStageRef =
     useRef(-1);
@@ -372,8 +332,7 @@ export function Hero() {
     const updateViewport =
       () => {
         setIsMobile(
-          window.innerWidth <
-            768,
+          window.innerWidth < 768,
         );
       };
 
@@ -411,9 +370,8 @@ export function Hero() {
           return;
         }
 
-        videoRefs.current[
-          index
-        ] = element;
+        videoRefs.current[index] =
+          element;
       },
       [],
     );
@@ -424,8 +382,7 @@ export function Hero() {
 
   useEffect(() => {
     if (
-      sceneAssets.length ===
-      0
+      sceneAssets.length === 0
     ) {
       return;
     }
@@ -451,42 +408,20 @@ export function Hero() {
               }
 
               video.muted = true;
-
-              video.playsInline =
-                true;
-
-              video.preload =
-                "auto";
+              video.playsInline = true;
+              video.preload = "auto";
 
               video.load();
 
               if (
-                typeof video
-                  .readyState ===
-                "number" &&
-                video.readyState >=
-                  2
+                video.readyState >= 2
               ) {
                 return;
               }
 
               await new Promise<void>(
-                (
-                  resolve,
-                ) => {
-                  const handleReady =
-                    () => {
-                      cleanup();
-
-                      resolve();
-                    };
-
-                  const handleError =
-                    () => {
-                      cleanup();
-
-                      resolve();
-                    };
+                (resolve) => {
+                  let resolved = false;
 
                   const cleanup =
                     () => {
@@ -504,6 +439,28 @@ export function Hero() {
                         "error",
                         handleError,
                       );
+                    };
+
+                  const resolveOnce =
+                    () => {
+                      if (resolved) {
+                        return;
+                      }
+
+                      resolved = true;
+
+                      cleanup();
+                      resolve();
+                    };
+
+                  const handleReady =
+                    () => {
+                      resolveOnce();
+                    };
+
+                  const handleError =
+                    () => {
+                      resolveOnce();
                     };
 
                   video.addEventListener(
@@ -543,10 +500,6 @@ export function Hero() {
         }
       };
 
-    /**
-     * Give React one frame to mount
-     * all video elements before preload.
-     */
     const timer =
       window.setTimeout(
         prepareVideos,
@@ -556,166 +509,9 @@ export function Hero() {
     return () => {
       cancelled = true;
 
-      window.clearTimeout(
-        timer,
-      );
+      window.clearTimeout(timer);
     };
   }, []);
-
-  // ==========================================================
-  // SCROLL GESTURE DETECTION
-  // ==========================================================
-
-  useEffect(() => {
-    const handleScroll =
-      () => {
-        const nextProgress =
-          clamp(
-            progress,
-            0,
-            1,
-          );
-
-        const previous =
-          previousScrollProgressRef.current;
-
-        if (
-          !scrollInitializedRef.current
-        ) {
-          previousScrollProgressRef.current =
-            nextProgress;
-
-          scrollInitializedRef.current =
-            true;
-
-          return;
-        }
-
-        const delta =
-          nextProgress -
-          previous;
-
-        previousScrollProgressRef.current =
-          nextProgress;
-
-        if (
-          Math.abs(delta) <
-          SCROLL_EPSILON
-        ) {
-          return;
-        }
-
-        /**
-         * First real scroll event
-         * of this gesture.
-         *
-         * IMPORTANT:
-         *
-         * We anchor the virtual timeline
-         * at its CURRENT position.
-         *
-         * This prevents the video from
-         * jumping back to frame 1 just
-         * because the page progress is
-         * still near 0.
-         */
-        if (
-          !isScrollingRef.current
-        ) {
-          isScrollingRef.current =
-            true;
-
-          scrollAnchorProgressRef.current =
-            nextProgress;
-
-          virtualAnchorProgressRef.current =
-            smoothProgressRef.current;
-        }
-
-        const scrollDelta =
-          nextProgress -
-          scrollAnchorProgressRef.current;
-
-        const target =
-          virtualAnchorProgressRef.current +
-          scrollDelta *
-            SCROLL_GESTURE_GAIN;
-
-        targetProgressRef.current =
-          clamp(
-            target,
-            0,
-            1,
-          );
-
-        lastScrollTimeRef.current =
-          performance.now();
-
-        if (
-          scrollStopTimerRef.current !==
-          null
-        ) {
-          window.clearTimeout(
-            scrollStopTimerRef.current,
-          );
-        }
-
-        scrollStopTimerRef.current =
-          window.setTimeout(
-            () => {
-              isScrollingRef.current =
-                false;
-
-              /**
-               * When scrolling stops,
-               * autoplay resumes from
-               * the CURRENT cinematic position.
-               */
-              virtualAnchorProgressRef.current =
-                smoothProgressRef.current;
-
-              scrollAnchorProgressRef.current =
-                previousScrollProgressRef.current;
-
-              targetProgressRef.current =
-                smoothProgressRef.current;
-            },
-            SCROLL_STOP_DELAY,
-          );
-      };
-
-    /**
-     * We deliberately listen directly
-     * to window scroll instead of using
-     * React progress as the only trigger.
-     */
-    window.addEventListener(
-      "scroll",
-      handleScroll,
-      {
-        passive: true,
-      },
-    );
-
-    return () => {
-      window.removeEventListener(
-        "scroll",
-        handleScroll,
-      );
-
-      if (
-        scrollStopTimerRef.current !==
-        null
-      ) {
-        window.clearTimeout(
-          scrollStopTimerRef.current,
-        );
-
-        scrollStopTimerRef.current =
-          null;
-      }
-    };
-  }, [progress]);
 
   // ==========================================================
   // INITIAL SCROLL POSITION
@@ -749,6 +545,157 @@ export function Hero() {
   }, []);
 
   // ==========================================================
+  // SCROLL GESTURE DETECTION
+  // ==========================================================
+
+  useEffect(() => {
+    const handleScroll =
+      () => {
+        const nextProgress =
+          clamp(
+            progress,
+            0,
+            1,
+          );
+
+        const previous =
+          previousScrollProgressRef.current;
+
+        if (
+          !scrollInitializedRef.current
+        ) {
+          previousScrollProgressRef.current =
+            nextProgress;
+
+          scrollInitializedRef.current =
+            true;
+
+          return;
+        }
+
+        const delta =
+          nextProgress - previous;
+
+        previousScrollProgressRef.current =
+          nextProgress;
+
+        if (
+          Math.abs(delta) <
+          SCROLL_EPSILON
+        ) {
+          return;
+        }
+
+        // ----------------------------------------------------
+        // START OF SCROLL GESTURE
+        // ----------------------------------------------------
+
+        if (
+          !isScrollingRef.current
+        ) {
+          isScrollingRef.current =
+            true;
+
+          /**
+           * Remember the page position where
+           * this gesture started.
+           */
+          scrollAnchorProgressRef.current =
+            nextProgress;
+
+          /**
+           * Remember the cinematic position
+           * where this gesture started.
+           */
+          virtualAnchorProgressRef.current =
+            smoothProgressRef.current;
+        }
+
+        // ----------------------------------------------------
+        // MAP PAGE SCROLL → CINEMATIC TARGET
+        // ----------------------------------------------------
+
+        const scrollDelta =
+          nextProgress -
+          scrollAnchorProgressRef.current;
+
+        const target =
+          virtualAnchorProgressRef.current +
+          scrollDelta *
+            SCROLL_GESTURE_GAIN;
+
+        targetProgressRef.current =
+          clamp(
+            target,
+            0,
+            1,
+          );
+
+        // ----------------------------------------------------
+        // RESET STOP TIMER
+        // ----------------------------------------------------
+
+        if (
+          scrollStopTimerRef.current !==
+          null
+        ) {
+          window.clearTimeout(
+            scrollStopTimerRef.current,
+          );
+        }
+
+        scrollStopTimerRef.current =
+          window.setTimeout(
+            () => {
+              isScrollingRef.current =
+                false;
+
+              /**
+               * Autoplay continues from exactly
+               * where the cinematic timeline is.
+               */
+              virtualAnchorProgressRef.current =
+                smoothProgressRef.current;
+
+              scrollAnchorProgressRef.current =
+                previousScrollProgressRef.current;
+
+              targetProgressRef.current =
+                smoothProgressRef.current;
+            },
+            SCROLL_STOP_DELAY,
+          );
+      };
+
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true,
+      },
+    );
+
+    return () => {
+      window.removeEventListener(
+        "scroll",
+        handleScroll,
+      );
+
+      if (
+        scrollStopTimerRef.current !==
+        null
+      ) {
+        window.clearTimeout(
+          scrollStopTimerRef.current,
+        );
+
+        scrollStopTimerRef.current =
+          null;
+      }
+    };
+  }, [progress]);
+
+  // ==========================================================
   // VIDEO CONTROL
   // ==========================================================
 
@@ -776,8 +723,7 @@ export function Hero() {
             desiredProgress,
             0,
             1,
-          ) *
-          duration;
+          ) * duration;
 
         const currentTime =
           video.currentTime;
@@ -789,11 +735,6 @@ export function Hero() {
             VIDEO_TIME_EASE,
           );
 
-        /**
-         * Avoid extremely tiny currentTime
-         * writes because they can cause
-         * unnecessary browser work.
-         */
         if (
           Math.abs(
             nextTime -
@@ -813,7 +754,7 @@ export function Hero() {
     );
 
   // ==========================================================
-  // VIDEO PLAYBACK
+  // KEEP VIDEO PAUSED
   // ==========================================================
 
   const keepVideoPaused =
@@ -835,8 +776,7 @@ export function Hero() {
   useEffect(() => {
     if (
       !videosReady ||
-      sceneAssets.length ===
-        0
+      sceneAssets.length === 0
     ) {
       return;
     }
@@ -849,9 +789,9 @@ export function Hero() {
           return;
         }
 
-        // ----------------------------------------------------
-        // AUTOPLAY
-        // ----------------------------------------------------
+        // ====================================================
+        // AUTOPLAY WHEN NOT SCROLLING
+        // ====================================================
 
         if (
           !isScrollingRef.current
@@ -872,9 +812,9 @@ export function Hero() {
             next;
         }
 
-        // ----------------------------------------------------
-        // SMOOTH TIMELINE
-        // ----------------------------------------------------
+        // ====================================================
+        // SMOOTH CINEMATIC TIMELINE
+        // ====================================================
 
         const current =
           smoothProgressRef.current;
@@ -889,17 +829,11 @@ export function Hero() {
             SCRUB_EASE,
           );
 
-        /**
-         * If the difference becomes tiny,
-         * snap to target to avoid endless
-         * micro interpolation.
-         */
         if (
           Math.abs(
             target -
               nextProgress,
-          ) <
-          0.00002
+          ) < 0.00002
         ) {
           nextProgress =
             target;
@@ -908,9 +842,9 @@ export function Hero() {
         smoothProgressRef.current =
           nextProgress;
 
-        // ----------------------------------------------------
+        // ====================================================
         // SCENE
-        // ----------------------------------------------------
+        // ====================================================
 
         const sceneCount =
           sceneAssets.length;
@@ -924,9 +858,9 @@ export function Hero() {
             sceneCount,
           );
 
-        // ----------------------------------------------------
-        // ACTIVE SCENE
-        // ----------------------------------------------------
+        // ====================================================
+        // ACTIVE SCENE STATE
+        // ====================================================
 
         if (
           sceneIndex !==
@@ -940,9 +874,9 @@ export function Hero() {
           );
         }
 
-        // ----------------------------------------------------
-        // VIDEO
-        // ----------------------------------------------------
+        // ====================================================
+        // CURRENT VIDEO
+        // ====================================================
 
         const currentVideo =
           videoRefs.current[
@@ -960,9 +894,9 @@ export function Hero() {
           );
         }
 
-        // ----------------------------------------------------
+        // ====================================================
         // NEXT VIDEO
-        // ----------------------------------------------------
+        // ====================================================
 
         const nextSceneIndex =
           Math.min(
@@ -976,8 +910,7 @@ export function Hero() {
           ];
 
         const crossfadeStart =
-          1 -
-          SCENE_CROSSFADE;
+          1 - SCENE_CROSSFADE;
 
         const transitionProgress =
           sceneProgress >
@@ -1000,14 +933,8 @@ export function Hero() {
             nextVideo,
           );
 
-          /**
-           * Next scene starts at 0
-           * and gets prepared before
-           * the crossfade.
-           */
           if (
-            transitionProgress >
-            0
+            transitionProgress > 0
           ) {
             updateVideo(
               nextVideo,
@@ -1016,9 +943,9 @@ export function Hero() {
           }
         }
 
-        // ----------------------------------------------------
+        // ====================================================
         // ZOOM
-        // ----------------------------------------------------
+        // ====================================================
 
         const currentScale =
           1 +
@@ -1055,17 +982,13 @@ export function Hero() {
             );
         }
 
-        // ----------------------------------------------------
-        // HERO STAGE
-        // ----------------------------------------------------
+        // ====================================================
+        // HERO NARRATIVE STAGE
+        // ====================================================
 
         /**
-         * We retain the existing
-         * heroStages based on the
-         * original 50-frame narrative.
-         *
-         * The video timeline maps onto
-         * those 50 conceptual frames.
+         * Map cinematic progress to
+         * the existing 50-frame narrative.
          */
         const virtualFrame =
           Math.min(
@@ -1091,6 +1014,10 @@ export function Hero() {
             virtualFrame,
           );
         }
+
+        // ====================================================
+        // NEXT RAF
+        // ====================================================
 
         animationFrameRef.current =
           window.requestAnimationFrame(
@@ -1152,8 +1079,7 @@ export function Hero() {
   // ==========================================================
 
   if (
-    sceneAssets.length ===
-    0
+    sceneAssets.length === 0
   ) {
     return (
       <section
@@ -1283,7 +1209,7 @@ export function Hero() {
                     object-cover
                     pointer-events-none
                     select-none
-                    will-change-transform,opacity
+                    will-change-transform
                   "
                   style={{
                     opacity:

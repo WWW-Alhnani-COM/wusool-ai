@@ -1341,10 +1341,6 @@ export function Hero() {
           "
         />
 
-        {/* ==================================================
-            MAIN BRASS OVERLAY
-            ================================================== */}
-
         <div
           className="
             pointer-events-none
@@ -1352,8 +1348,8 @@ export function Hero() {
             inset-0
             z-[3]
             bg-gradient-to-l
-            from-[#C89B5C]/70
-            via-[#C89B5C]/25
+            from-white/75
+            via-white/20
             to-transparent
           "
         />
@@ -1787,10 +1783,10 @@ function HeroContent({
           text-center
           text-base
           leading-relaxed
-          text-white
+          text-ink/70
           sm:text-xl
           lg:text-2xl
-          drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]
+          drop-shadow-[0_3px_18px_rgba(23,23,23,0.10)]
         "
       >
         {stage.subheadline}

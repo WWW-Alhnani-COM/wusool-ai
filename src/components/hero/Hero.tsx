@@ -23,8 +23,22 @@ import { useScrollProgress } from "@/hooks/useScrollProgress";
 // CONFIGURATION
 // ============================================================
 
+/*
+ * مقدار الـ scroll المطلوب لتشغيل الـ 50 frame كاملة.
+ *
+ * Desktop:
+ * 500vh
+ *
+ * Mobile:
+ * 420vh
+ *
+ * مهم:
+ * لا نستخدم lowPower لتقليل طول الـ scroll.
+ * lowPower يؤثر فقط على جودة الـ canvas / DPR.
+ */
+
 const HERO_SCROLL_LENGTH_VH = 500;
-const HERO_SCROLL_LENGTH_VH_LIGHT = 320;
+const HERO_SCROLL_LENGTH_VH_MOBILE = 420;
 
 const TEXT_EXIT_DURATION = 0.28;
 const TEXT_ENTER_DURATION = 0.55;
@@ -33,8 +47,15 @@ const TEXT_ENTER_DURATION = 0.55;
 // HELPERS
 // ============================================================
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
+function clamp(
+  value: number,
+  min: number,
+  max: number,
+) {
+  return Math.min(
+    Math.max(value, min),
+    max,
+  );
 }
 
 function getStageForFrame(
@@ -58,11 +79,17 @@ export function Hero() {
   const reducedMotion = useReducedMotion();
   const lowPower = useIsLowPowerDevice();
 
-  const { ref, progress } =
-    useScrollProgress<HTMLDivElement>();
+  const {
+    ref,
+    progress,
+  } = useScrollProgress<HTMLDivElement>();
 
   const frames = sequenceFrames;
   const frameCount = frames.length;
+
+  // ==========================================================
+  // REFS
+  // ==========================================================
 
   const canvasRef =
     useRef<HTMLCanvasElement | null>(null);
@@ -82,21 +109,60 @@ export function Hero() {
   const lastFrameRef =
     useRef(-1);
 
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
   const [preloaded, setPreloaded] =
     useState(false);
+
+  const [isMobile, setIsMobile] =
+    useState(false);
+
+  // ==========================================================
+  // RESPONSIVE DETECTION
+  // ==========================================================
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setIsMobile(
+        window.innerWidth < 768,
+      );
+    };
+
+    updateViewport();
+
+    window.addEventListener(
+      "resize",
+      updateViewport,
+      { passive: true },
+    );
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        updateViewport,
+      );
+    };
+  }, []);
 
   // ==========================================================
   // FRAME CALCULATION
   // ==========================================================
 
-  const safeProgress = clamp(progress, 0, 1);
+  const safeProgress = clamp(
+    progress,
+    0,
+    1,
+  );
 
   const activeIndex =
     frameCount > 0
       ? Math.min(
           frameCount - 1,
           Math.round(
-            safeProgress * (frameCount - 1),
+            safeProgress *
+              (frameCount - 1),
           ),
         )
       : 0;
@@ -114,7 +180,7 @@ export function Hero() {
   );
 
   // ==========================================================
-  // PRELOAD ALL IMAGES
+  // PRELOAD ALL FRAMES
   // ==========================================================
 
   useEffect(() => {
@@ -127,42 +193,47 @@ export function Hero() {
     const preloadImages = async () => {
       const results =
         await Promise.all(
-          frames.map(async (frame) => {
-            const image =
-              new Image();
+          frames.map(
+            async (frame) => {
+              const image =
+                new Image();
 
-            image.decoding = "async";
-            image.loading = "eager";
-            image.src = frame.src;
+              image.decoding =
+                "async";
 
-            try {
-              await image.decode();
-            } catch {
-              await new Promise<void>(
-                (resolve) => {
-                  if (
-                    image.complete
-                  ) {
-                    resolve();
-                    return;
-                  }
+              image.loading =
+                "eager";
 
-                  image.onload = () =>
-                    resolve();
+              image.src =
+                frame.src;
 
-                  image.onerror = () =>
-                    resolve();
-                },
-              );
-            }
+              try {
+                await image.decode();
+              } catch {
+                await new Promise<void>(
+                  (resolve) => {
+                    if (
+                      image.complete
+                    ) {
+                      resolve();
+                      return;
+                    }
 
-            return image;
-          }),
+                    image.onload =
+                      () => resolve();
+
+                    image.onerror =
+                      () => resolve();
+                  },
+                );
+              }
+
+              return image;
+            },
+          ),
         );
 
-      if (
-        cancelled
-      ) {
+      if (cancelled) {
         return;
       }
 
@@ -184,61 +255,76 @@ export function Hero() {
   // CANVAS RESIZE
   // ==========================================================
 
-  const resizeCanvas = useCallback(() => {
-    const canvas =
-      canvasRef.current;
+  const resizeCanvas =
+    useCallback(() => {
+      const canvas =
+        canvasRef.current;
 
-    if (!canvas) {
-      return;
-    }
+      if (!canvas) {
+        return;
+      }
 
-    const rect =
-      canvas.getBoundingClientRect();
+      const rect =
+        canvas.getBoundingClientRect();
 
-    const dpr =
-      Math.min(
-        window.devicePixelRatio || 1,
-        lowPower ? 1.5 : 2,
-      );
+      /*
+       * الهاتف يستخدم DPR أقل للحفاظ
+       * على الأداء، لكنه لا يؤثر إطلاقًا
+       * على سرعة الـscroll أو عدد الـframes.
+       */
 
-    const width =
-      Math.max(
-        1,
-        Math.round(
-          rect.width * dpr,
-        ),
-      );
+      const maxDpr =
+        lowPower
+          ? 1.5
+          : 2;
 
-    const height =
-      Math.max(
-        1,
-        Math.round(
-          rect.height * dpr,
-        ),
-      );
+      const dpr =
+        Math.min(
+          window.devicePixelRatio || 1,
+          maxDpr,
+        );
 
-    if (
-      canvas.width !== width ||
-      canvas.height !== height
-    ) {
-      canvas.width = width;
-      canvas.height = height;
-    }
+      const width =
+        Math.max(
+          1,
+          Math.round(
+            rect.width * dpr,
+          ),
+        );
 
-    const context =
-      contextRef.current;
+      const height =
+        Math.max(
+          1,
+          Math.round(
+            rect.height * dpr,
+          ),
+        );
 
-    if (context) {
-      context.setTransform(
-        1,
-        0,
-        0,
-        1,
-        0,
-        0,
-      );
-    }
-  }, [lowPower]);
+      if (
+        canvas.width !== width ||
+        canvas.height !== height
+      ) {
+        canvas.width =
+          width;
+
+        canvas.height =
+          height;
+      }
+
+      const context =
+        contextRef.current;
+
+      if (context) {
+        context.setTransform(
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+        );
+      }
+    }, [lowPower]);
 
   // ==========================================================
   // DRAW FRAME
@@ -300,6 +386,10 @@ export function Hero() {
         const imageHeight =
           image.naturalHeight;
 
+        /*
+         * object-fit: cover
+         */
+
         const scale =
           Math.max(
             canvasWidth /
@@ -334,15 +424,9 @@ export function Hero() {
         );
 
         /*
-         * Important:
-         *
-         * We intentionally do not clear the canvas
-         * before drawing a new frame.
-         *
-         * The previous frame remains visible until
-         * the next valid frame is ready.
-         *
-         * This prevents black flashes.
+         * لا نمسح الـcanvas قبل رسم
+         * الـframe الجديد حتى لا تظهر
+         * ومضات سوداء على الهاتف.
          */
 
         context.drawImage(
@@ -360,7 +444,7 @@ export function Hero() {
     );
 
   // ==========================================================
-  // INITIAL CANVAS + RESIZE OBSERVER
+  // INITIAL CANVAS
   // ==========================================================
 
   useEffect(() => {
@@ -423,7 +507,7 @@ export function Hero() {
   ]);
 
   // ==========================================================
-  // FRAME SCRUBBING
+  // SCROLL → FRAME
   // ==========================================================
 
   useEffect(() => {
@@ -484,9 +568,18 @@ export function Hero() {
   // SCROLL LENGTH
   // ==========================================================
 
+  /*
+   * الهاتف يحصل على 420vh.
+   *
+   * هذا يعني أن المستخدم لديه مساحة
+   * كافية لتحريك جميع الـ50 Frame.
+   *
+   * لا نستخدم lowPower هنا.
+   */
+
   const scrollLength =
-    lowPower
-      ? HERO_SCROLL_LENGTH_VH_LIGHT
+    isMobile
+      ? HERO_SCROLL_LENGTH_VH_MOBILE
       : HERO_SCROLL_LENGTH_VH;
 
   // ==========================================================
@@ -731,7 +824,10 @@ function HeroContent({
         flex-col
         items-center
         text-center
-        py-32
+        px-2
+        sm:px-0
+        py-24
+        sm:py-32
       "
     >
       {/* ======================================================
@@ -772,7 +868,8 @@ function HeroContent({
         <span
           className="
             h-px
-            w-10
+            w-8
+            sm:w-10
             bg-brass/70
           "
         />
@@ -784,7 +881,8 @@ function HeroContent({
         <span
           className="
             h-px
-            w-10
+            w-8
+            sm:w-10
             bg-brass/70
           "
         />
@@ -828,17 +926,17 @@ function HeroContent({
         }}
         className="
           w-full
+          max-w-4xl
+          mx-auto
           font-display
           font-bold
-          text-4xl
-          leading-[1.08]
+          text-3xl
+          leading-[1.12]
           tracking-tight
           text-center
           text-ink
           sm:text-5xl
           lg:text-7xl
-          max-w-4xl
-          mx-auto
           drop-shadow-[0_5px_30px_rgba(23,23,23,0.12)]
         "
       >
@@ -882,12 +980,14 @@ function HeroContent({
           ],
         }}
         className="
-          mt-6
+          mt-5
+          sm:mt-6
           w-full
           max-w-2xl
           mx-auto
+          px-2
           text-center
-          text-lg
+          text-base
           leading-relaxed
           text-ink/70
           sm:text-xl
@@ -929,13 +1029,15 @@ function HeroContent({
           ],
         }}
         className="
-          mt-8
+          mt-7
+          sm:mt-8
           flex
           flex-col
           items-center
           justify-center
-          gap-4
+          gap-3
           sm:flex-row
+          sm:gap-4
           sm:justify-center
         "
       >
@@ -1014,7 +1116,7 @@ function HeroOverlays() {
       />
 
       {/* ======================================================
-          SUBTLE NETWORK LINE
+          NETWORK LINE
           ====================================================== */}
 
       <svg
@@ -1024,10 +1126,11 @@ function HeroOverlays() {
           -top-10
           left-1/2
           z-[4]
-          w-[140%]
+          w-[180%]
           max-w-3xl
           -translate-x-1/2
           opacity-25
+          sm:w-[140%]
         "
         viewBox="0 0 600 300"
         fill="none"

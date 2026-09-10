@@ -1302,11 +1302,24 @@ export function Hero() {
                   duration: 0.12,
                   ease: "easeOut",
                 }}
-                className="
-                  max-w-3xl
-                  text-right
-                  ml-auto
-                "
+className="
+  relative
+  max-w-3xl
+  ml-auto
+  rounded-[28px]
+  border
+  border-white/10
+  bg-white/[0.06]
+  px-6
+  py-8
+  text-right
+  backdrop-blur-[6px]
+  shadow-[0_12px_50px_rgba(0,0,0,0.08)]
+  sm:px-10
+  sm:py-10
+  lg:px-12
+  lg:py-12
+"
                 dir="rtl"
               >
                 {/* ==========================================
@@ -1420,14 +1433,13 @@ export function Hero() {
                     }
                   </Button>
 
-                  <Button
-                    to="/كيف-نعمل"
-                    variant="secondary"
-                  >
-                    {
-                      heroContent.ctaSecondary
-                    }
-                  </Button>
+      <Button
+  to="/كيف-نعمل"
+  variant="secondary"
+  className="border-white/40 text-white hover:border-white/70 hover:text-white"
+>
+  {heroContent.ctaSecondary}
+</Button>
                 </div>
 
                 {/* ==========================================

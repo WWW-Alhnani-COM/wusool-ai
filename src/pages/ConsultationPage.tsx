@@ -8,7 +8,7 @@ import { WhatsAppCTA } from '@/components/ui/WhatsAppCTA';
 import { Container } from '@/components/ui/Container';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-export function ContactPage() {
+export default function ConsultationPage() {
   const reducedMotion = useReducedMotion();
 
   return (

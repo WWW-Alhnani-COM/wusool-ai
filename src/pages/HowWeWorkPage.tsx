@@ -6,7 +6,7 @@ import { FinalCTA } from "@/components/sections/FinalCTA";
 export function HowWeWorkPage() {
   return (
     <>
-      <section className="pt-16 sm:pt-24 pb-8">
+      {/* <section className="pt-16 sm:pt-24 pb-8">
         <Container>
           <SectionHeading
             eyebrow="كيف نعمل"
@@ -14,7 +14,7 @@ export function HowWeWorkPage() {
             description="من أول مكالمة إلى نظام يعمل فعليًا، ثم يستمر بالتطور معك."
           />
         </Container>
-      </section>
+      </section> */}
       <ProcessTimeline />
       <FinalCTA />
     </>

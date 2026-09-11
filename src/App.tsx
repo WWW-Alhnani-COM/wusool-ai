@@ -18,7 +18,7 @@ export default function App() {
         <Route path="/الحلول" element={<SolutionsPage />} />
         <Route path="/القطاعات" element={<SectorsPage />} />
         <Route path="/كيف-نعمل" element={<HowWeWorkPage />} />
-        <Route path="/عن-وصول" element={<AboutPage />} />
+<Route path="/عن-جذع" element={<AboutPage />} />
         <Route path="/تواصل" element={<ContactPage />} />
         <Route path="/طلب-استشارة" element={<ConsultationPage />} />
         <Route path="/سياسة-الخصوصية" element={<LegalPage title="سياسة الخصوصية" />} />

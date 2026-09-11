@@ -33,14 +33,12 @@ const HERO_SCROLL_LENGTH_VH_MOBILE = 480;
 // ============================================================
 
 // لا يوجد smoothing للـ scroll.
-// الـ scroll يحدد موضع الفيديو مباشرة.
+// الـ scroll يحدد موضع الـ timeline مباشرة.
 
 const ZOOM_AMOUNT = 0.095;
 
 // نسبة بسيطة لعمل crossfade بين المشاهد.
 const SCENE_CROSSFADE = 0.12;
-
-// سرعة autoplay الخفيفة جدًا عند عدم التمرير.
 
 // يستخدم فقط لمعرفة انتهاء حركة التمرير.
 // لا يؤخر الـ scroll نفسه.
@@ -148,12 +146,12 @@ function getSceneProgress(
 }
 
 // ============================================================
-// VIDEO ASSETS
+// GIF ASSETS
 // ============================================================
 
-const videoModules =
+const gifModules =
   import.meta.glob(
-    "/src/assets/public/videos/scene-*.mp4",
+    "/src/assets/public/videos/scene-*.gif",
     {
       eager: true,
       query: "?url",
@@ -162,7 +160,7 @@ const videoModules =
   ) as Record<string, string>;
 
 const sceneAssets: SceneAsset[] =
-  Object.entries(videoModules)
+  Object.entries(gifModules)
     .sort(([a], [b]) =>
       a.localeCompare(b),
     )
@@ -173,7 +171,7 @@ const sceneAssets: SceneAsset[] =
             .split("/")
             .pop()
             ?.replace(
-              ".mp4",
+              ".gif",
               "",
             ) ?? path,
         src,
@@ -219,12 +217,12 @@ export function Hero() {
   ] = useState(1);
 
   // ==========================================================
-  // VIDEO REFS
+  // GIF REFS
   // ==========================================================
 
-  const videoRefs =
+  const imageRefs =
     useRef<
-      HTMLVideoElement[]
+      HTMLImageElement[]
     >([]);
 
   // ==========================================================
@@ -254,7 +252,7 @@ export function Hero() {
     useRef(false);
 
   /**
-   * RAF الخاص بالـ idle autoplay.
+   * RAF الخاص بالـ timeline.
    */
   const animationFrameRef =
     useRef<number | null>(null);
@@ -314,29 +312,29 @@ export function Hero() {
   }, []);
 
   // ==========================================================
-  // VIDEO ELEMENT MANAGEMENT
+  // GIF ELEMENT MANAGEMENT
   // ==========================================================
 
-  const setVideoRef =
+  const setImageRef =
     useCallback(
       (
         index: number,
         element:
-          | HTMLVideoElement
+          | HTMLImageElement
           | null,
       ) => {
         if (!element) {
           return;
         }
 
-        videoRefs.current[index] =
+        imageRefs.current[index] =
           element;
       },
       [],
     );
 
   // ==========================================================
-  // VIDEO PRELOADING
+  // GIF PRELOADING
   // ==========================================================
 
   useEffect(() => {
@@ -348,39 +346,70 @@ export function Hero() {
 
     let cancelled = false;
 
-    const prepareVideos =
+    const prepareImages =
       async () => {
-        const videos =
-          videoRefs.current;
+        const images =
+          imageRefs.current;
 
         const preloadPromises =
           sceneAssets.map(
             async (
-              _scene,
+              scene,
               index,
             ) => {
-              const video =
-                videos[index];
+              const image =
+                images[index];
 
-              if (!video) {
+              if (!image) {
+                /*
+                 * في حال لم يتم تركيب العنصر بعد،
+                 * نقوم بتحميل الـGIF مباشرة.
+                 */
+                await new Promise<void>(
+                  (resolve) => {
+                    const preload =
+                      new Image();
+
+                    let resolved =
+                      false;
+
+                    const finish =
+                      () => {
+                        if (
+                          resolved
+                        ) {
+                          return;
+                        }
+
+                        resolved =
+                          true;
+
+                        resolve();
+                      };
+
+                    preload.onload =
+                      finish;
+
+                    preload.onerror =
+                      finish;
+
+                    preload.src =
+                      scene.src;
+
+                    if (
+                      preload.complete
+                    ) {
+                      finish();
+                    }
+                  },
+                );
+
                 return;
               }
 
-              video.muted = true;
-              video.playsInline = true;
-              video.preload = "auto";
-
-              /*
-               * الفيديوهات لا تعمل تلقائيًا.
-               * Hero هو الذي يتحكم فيها.
-               */
-              video.autoplay = false;
-              video.loop = false;
-
-              video.load();
-
               if (
-                video.readyState >= 2
+                image.complete &&
+                image.naturalWidth > 0
               ) {
                 return;
               }
@@ -392,17 +421,12 @@ export function Hero() {
 
                   const cleanup =
                     () => {
-                      video.removeEventListener(
-                        "loadeddata",
+                      image.removeEventListener(
+                        "load",
                         handleReady,
                       );
 
-                      video.removeEventListener(
-                        "canplay",
-                        handleReady,
-                      );
-
-                      video.removeEventListener(
+                      image.removeEventListener(
                         "error",
                         handleError,
                       );
@@ -410,11 +434,14 @@ export function Hero() {
 
                   const resolveOnce =
                     () => {
-                      if (resolved) {
+                      if (
+                        resolved
+                      ) {
                         return;
                       }
 
-                      resolved = true;
+                      resolved =
+                        true;
 
                       cleanup();
                       resolve();
@@ -430,29 +457,27 @@ export function Hero() {
                       resolveOnce();
                     };
 
-                  video.addEventListener(
-                    "loadeddata",
+                  image.addEventListener(
+                    "load",
                     handleReady,
                     {
                       once: true,
                     },
                   );
 
-                  video.addEventListener(
-                    "canplay",
-                    handleReady,
-                    {
-                      once: true,
-                    },
-                  );
-
-                  video.addEventListener(
+                  image.addEventListener(
                     "error",
                     handleError,
                     {
                       once: true,
                     },
                   );
+
+                  if (
+                    image.complete
+                  ) {
+                    resolveOnce();
+                  }
                 },
               );
             },
@@ -469,7 +494,7 @@ export function Hero() {
 
     const timer =
       window.setTimeout(
-        prepareVideos,
+        prepareImages,
         50,
       );
 
@@ -567,29 +592,20 @@ export function Hero() {
 
     /*
      * عند بدء التمرير:
-     * أوقف كل الفيديوهات حتى لا يحدث
-     * تعارض بين playback و currentTime.
+     * الـGIF لا يحتاج pause/play.
+     *
+     * يبقى GIF يعمل بشكل طبيعي،
+     * بينما الـscroll يتحكم في المشهد النشط.
      */
     if (
       !isScrollingRef.current
     ) {
       isScrollingRef.current =
         true;
-
-      videoRefs.current.forEach(
-        (video) => {
-          if (
-            video &&
-            !video.paused
-          ) {
-            video.pause();
-          }
-        },
-      );
     }
 
     /*
-     * اكتشاف توقف الـ scroll.
+     * اكتشاف توقف الـscroll.
      */
     if (
       scrollStopTimerRef.current !==
@@ -611,124 +627,7 @@ export function Hero() {
   }, [progress]);
 
   // ==========================================================
-  // DIRECT VIDEO SEEK
-  // ==========================================================
-
-  const updateVideo =
-    useCallback(
-      (
-        video: HTMLVideoElement,
-        desiredProgress: number,
-      ) => {
-        if (
-          !video ||
-          !Number.isFinite(
-            video.duration,
-          ) ||
-          video.duration <= 0
-        ) {
-          return;
-        }
-
-        const duration =
-          video.duration;
-
-        /*
-         * Scroll progress → video time
-         */
-        const desiredTime =
-          clamp(
-            desiredProgress,
-            0,
-            1,
-          ) * duration;
-
-        /*
-         * DIRECT SEEK
-         *
-         * لا lerp.
-         * لا easing.
-         * لا interpolation.
-         */
-        if (
-          Math.abs(
-            video.currentTime -
-              desiredTime,
-          ) > 0.001
-        ) {
-          try {
-            video.currentTime =
-              desiredTime;
-          } catch {
-            /*
-             * قد يحدث أثناء تغيير metadata.
-             */
-          }
-        }
-      },
-      [],
-    );
-
-  // ==========================================================
-  // PAUSE INACTIVE VIDEOS
-  // ==========================================================
-
-  const pauseInactiveVideos =
-    useCallback(
-      (
-        activeIndex: number,
-      ) => {
-        videoRefs.current.forEach(
-          (
-            video,
-            index,
-          ) => {
-            if (
-              video &&
-              index !== activeIndex &&
-              !video.paused
-            ) {
-              video.pause();
-            }
-          },
-        );
-      },
-      [],
-    );
-
-  // ==========================================================
-  // PLAY ACTIVE VIDEO
-  // ==========================================================
-
-  const playActiveVideo =
-    useCallback(
-      async (
-        video:
-          | HTMLVideoElement
-          | undefined,
-      ) => {
-        if (!video) {
-          return;
-        }
-
-        if (!video.paused) {
-          return;
-        }
-
-        try {
-          await video.play();
-        } catch {
-          /*
-           * المتصفح قد يمنع autoplay.
-           * الفيديو muted لذلك غالبًا لن يحدث ذلك.
-           */
-        }
-      },
-      [],
-    );
-
-  // ==========================================================
-  // MAIN VIDEO TIMELINE
+  // MAIN GIF TIMELINE
   // ==========================================================
 
   useEffect(() => {
@@ -761,18 +660,6 @@ export function Hero() {
             currentProgress,
             sceneAssets.length,
           );
-
-        const activeVideo =
-          videoRefs.current[
-            sceneIndex
-          ];
-
-        /*
-         * إيقاف الفيديوهات غير النشطة.
-         */
-        pauseInactiveVideos(
-          sceneIndex,
-        );
 
         /*
          * حساب frame الحالي.
@@ -836,25 +723,37 @@ export function Hero() {
         }
 
         /*
-         * تحديث الفيديو مباشرة.
+         * ====================================================
+         * GIF CROSSFADE PREPARATION
+         * ====================================================
+         *
+         * الـGIF لا يدعم currentTime.
+         *
+         * لذلك:
+         * - المشهد الحالي يظهر بشكل كامل.
+         * - المشهد التالي يتم إظهاره تدريجيًا عند الاقتراب
+         *   من نهاية المشهد الحالي.
+         *
+         * التحكم في المشاهد يبقى مرتبطًا بالـscroll مباشرة.
          */
-        if (activeVideo) {
-          updateVideo(
-            activeVideo,
-            sceneProgress,
-          );
-        }
 
-        /*
-         * crossfade بسيط بين المشاهد.
-         */
-        const nextVideo =
-          videoRefs.current[
+        const currentImage =
+          imageRefs.current[
+            sceneIndex
+          ];
+
+        const nextImage =
+          imageRefs.current[
             sceneIndex + 1
           ];
 
+        if (currentImage) {
+          currentImage.style.opacity =
+            "1";
+        }
+
         if (
-          nextVideo &&
+          nextImage &&
           sceneProgress >
             1 - SCENE_CROSSFADE
         ) {
@@ -868,28 +767,10 @@ export function Hero() {
               1,
             );
 
-          const nextSceneProgress =
-            fadeProgress;
-
-          updateVideo(
-            nextVideo,
-            nextSceneProgress,
-          );
-        }
-
-        /*
-         * عندما لا يوجد scroll،
-         * نسمح بحركة idle صغيرة جدًا.
-         */
-        if (
-          !isScrollingRef.current &&
-          activeVideo &&
-          videosReady &&
-          !reducedMotion
-        ) {
-          void playActiveVideo(
-            activeVideo,
-          );
+          nextImage.style.opacity =
+            String(
+              fadeProgress,
+            );
         }
 
         /*
@@ -921,13 +802,7 @@ export function Hero() {
           null;
       }
     };
-  }, [
-    pauseInactiveVideos,
-    playActiveVideo,
-    reducedMotion,
-    updateVideo,
-    videosReady,
-  ]);
+  }, []);
 
   // ==========================================================
   // REDUCED MOTION
@@ -938,17 +813,29 @@ export function Hero() {
       return;
     }
 
-    videoRefs.current.forEach(
-      (video) => {
-        if (
-          video &&
-          !video.paused
-        ) {
-          video.pause();
+    /*
+     * GIF نفسه لا يمكن إيقافه بشكل موثوق
+     * باستخدام pause().
+     *
+     * عند reduced motion نثبت opacity
+     * على المشهد الحالي فقط.
+     */
+    imageRefs.current.forEach(
+      (image, index) => {
+        if (!image) {
+          return;
         }
+
+        image.style.opacity =
+          index === activeScene
+            ? "1"
+            : "0";
       },
     );
-  }, [reducedMotion]);
+  }, [
+    reducedMotion,
+    activeScene,
+  ]);
 
   // ==========================================================
   // CLEANUP
@@ -973,14 +860,6 @@ export function Hero() {
           scrollStopTimerRef.current,
         );
       }
-
-      videoRefs.current.forEach(
-        (video) => {
-          if (video) {
-            video.pause();
-          }
-        },
-      );
     };
   }, []);
 
@@ -1037,9 +916,9 @@ export function Hero() {
           bg-black
         "
       >
-        
+
         {/* ==================================================
-            VIDEO BACKGROUND
+            GIF BACKGROUND
             ================================================== */}
 
         <div
@@ -1064,21 +943,18 @@ export function Hero() {
                 activeScene + 1;
 
               return (
-                <video
+                <img
                   key={scene.id}
                   ref={(element) =>
-                    setVideoRef(
+                    setImageRef(
                       index,
                       element,
                     )
                   }
                   src={scene.src}
-                  muted
-                  playsInline
-                  preload="auto"
-                  autoPlay={false}
-                  loop={false}
+                  alt=""
                   aria-hidden="true"
+                  draggable={false}
                   className="
                     absolute
                     inset-0
@@ -1104,6 +980,7 @@ export function Hero() {
             },
           )}
         </div>
+
         <div
           className="
             pointer-events-none
@@ -1115,6 +992,7 @@ export function Hero() {
             backdrop-saturate-[120%]
           "
         />
+
         {/* ==================================================
             DARK CINEMATIC OVERLAY
             ================================================== */}
@@ -1261,27 +1139,27 @@ export function Hero() {
             CONTENT
             ================================================== */}
 
-      <div
-  className="
-    relative
-    z-20
-    flex
-    h-full
-    w-full
-    items-center
-    justify-center
-  "
->
         <div
-  className="
-    flex
-    w-full
-    justify-center
-    px-5
-    sm:px-8
-    lg:px-12
-  "
->
+          className="
+            relative
+            z-20
+            flex
+            h-full
+            w-full
+            items-center
+            justify-center
+          "
+        >
+          <div
+            className="
+              flex
+              w-full
+              justify-center
+              px-5
+              sm:px-8
+              lg:px-12
+            "
+          >
             <AnimatePresence
               mode="wait"
               initial={false}
@@ -1314,61 +1192,66 @@ export function Hero() {
                   duration: 0.12,
                   ease: "easeOut",
                 }}
-         className="
-  w-full
-  max-w-4xl
-  text-center
-"
+                className="
+                  w-full
+                  max-w-4xl
+                  text-center
+                "
                 dir="rtl"
               >
-    
-        {/* LABEL */}
-<div
-  className="
-    mb-4
-    text-center
-    text-sm
-    font-medium
-    tracking-wide
-    text-white/65
-  "
->
-  {currentStage?.label}
-</div>
 
-{/* MAIN HEADLINE */}
-<h1
-  className="
-    text-center
-    text-4xl
-    font-bold
-    leading-[1.12]
-    tracking-tight
-    text-white
-    sm:text-5xl
-    lg:text-6xl
-    xl:text-7xl
-  "
->
-  {currentStage?.headline}
-</h1>
+                {/* LABEL */}
 
-{/* SUBHEADLINE */}
-<p
-  className="
-    mx-auto
-    mt-6
-    max-w-2xl
-    text-center
-    text-base
-    leading-8
-    text-white/75
-    sm:text-lg
-    lg:text-xl
-  "
->
-  {currentStage?.subheadline}
-</p>
+                <div
+                  className="
+                    mb-4
+                    text-center
+                    text-sm
+                    font-medium
+                    tracking-wide
+                    text-white/65
+                  "
+                >
+                  {currentStage?.label}
+                </div>
+
+                {/* MAIN HEADLINE */}
+
+                <h1
+                  className="
+                    text-center
+                    text-4xl
+                    font-bold
+                    leading-[1.12]
+                    tracking-tight
+                    text-white
+                    sm:text-5xl
+                    lg:text-6xl
+                    xl:text-7xl
+                  "
+                >
+                  {currentStage?.headline}
+                </h1>
+
+                {/* SUBHEADLINE */}
+
+                <p
+                  className="
+                    mx-auto
+                    mt-6
+                    max-w-2xl
+                    text-center
+                    text-base
+                    leading-8
+                    text-white/75
+                    sm:text-lg
+                    lg:text-xl
+                  "
+                >
+                  {
+                    currentStage?.subheadline
+                  }
+                </p>
 
                 {/* ==========================================
                     CTA
@@ -1380,7 +1263,8 @@ export function Hero() {
                     flex
                     flex-wrap
                     items-center
-justify-center                    gap-3
+                    justify-center
+                    gap-3
                   "
                 >
                   <Button
@@ -1394,8 +1278,12 @@ justify-center                    gap-3
                   <Button
                     to="/كيف-نعمل"
                     variant="secondary"
-                      className="border-white/40 text-white hover:border-white/70 hover:text-white"
-
+                    className="
+                      border-white/40
+                      text-white
+                      hover:border-white/70
+                      hover:text-white
+                    "
                   >
                     {
                       heroContent.ctaSecondary
@@ -1431,8 +1319,6 @@ justify-center                    gap-3
         {/* ==================================================
             BRAND / TOP
             ================================================== */}
-
-      
 
         {/* ==================================================
             PROGRESS INDICATOR

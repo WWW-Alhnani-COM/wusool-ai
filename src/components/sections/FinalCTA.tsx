@@ -1,11 +1,13 @@
-
 'use client';
 
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 import { finalCtaContent } from '@/data/content';
 import { Container } from '@/components/ui/Container';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+
+const MotionLink = motion(Link);
 
 export function FinalCTA() {
   const reducedMotion = useReducedMotion();
@@ -119,6 +121,7 @@ export function FinalCTA() {
             </span>
           </div>
 
+          {/* Main content */}
           <div
             className="
               relative
@@ -241,17 +244,70 @@ export function FinalCTA() {
               />
 
               {/* Nodes */}
-              <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brass/70" />
+              <span
+                className="
+                  absolute
+                  left-1/2
+                  top-1/2
+                  h-2
+                  w-2
+                  -translate-x-1/2
+                  -translate-y-1/2
+                  rounded-full
+                  bg-brass/70
+                "
+              />
 
-              <span className="absolute left-[19%] top-[30%] h-1.5 w-1.5 rounded-full bg-brass/40" />
+              <span
+                className="
+                  absolute
+                  left-[19%]
+                  top-[30%]
+                  h-1.5
+                  w-1.5
+                  rounded-full
+                  bg-brass/40
+                "
+              />
 
-              <span className="absolute right-[19%] top-[30%] h-1.5 w-1.5 rounded-full bg-brass/40" />
+              <span
+                className="
+                  absolute
+                  right-[19%]
+                  top-[30%]
+                  h-1.5
+                  w-1.5
+                  rounded-full
+                  bg-brass/40
+                "
+              />
 
-              <span className="absolute left-[19%] bottom-[30%] h-1.5 w-1.5 rounded-full bg-brass/40" />
+              <span
+                className="
+                  absolute
+                  bottom-[30%]
+                  left-[19%]
+                  h-1.5
+                  w-1.5
+                  rounded-full
+                  bg-brass/40
+                "
+              />
 
-              <span className="absolute right-[19%] bottom-[30%] h-1.5 w-1.5 rounded-full bg-brass/40" />
+              <span
+                className="
+                  absolute
+                  bottom-[30%]
+                  right-[19%]
+                  h-1.5
+                  w-1.5
+                  rounded-full
+                  bg-brass/40
+                "
+              />
             </div>
 
+            {/* Content */}
             <motion.div
               initial={
                 reducedMotion
@@ -348,10 +404,15 @@ export function FinalCTA() {
                   sm:gap-4
                 "
               >
-                <motion.a
-                  href="/طلب-استشارة"
-                  whileHover={reducedMotion ? undefined : { y: -2 }}
-                  whileTap={reducedMotion ? undefined : { scale: 0.98 }}
+                {/* Primary CTA */}
+                <MotionLink
+                  to="/طلب-استشارة"
+                  whileHover={
+                    reducedMotion ? undefined : { y: -2 }
+                  }
+                  whileTap={
+                    reducedMotion ? undefined : { scale: 0.98 }
+                  }
                   transition={{
                     duration: reducedMotion ? 0 : 0.2,
                   }}
@@ -390,12 +451,17 @@ export function FinalCTA() {
                   >
                     ←
                   </span>
-                </motion.a>
+                </MotionLink>
 
-                <motion.a
-                  href="/الحلول"
-                  whileHover={reducedMotion ? undefined : { y: -2 }}
-                  whileTap={reducedMotion ? undefined : { scale: 0.98 }}
+                {/* Secondary CTA */}
+                <MotionLink
+                  to="/الحلول"
+                  whileHover={
+                    reducedMotion ? undefined : { y: -2 }
+                  }
+                  whileTap={
+                    reducedMotion ? undefined : { scale: 0.98 }
+                  }
                   transition={{
                     duration: reducedMotion ? 0 : 0.2,
                   }}
@@ -437,7 +503,7 @@ export function FinalCTA() {
                   >
                     ←
                   </span>
-                </motion.a>
+                </MotionLink>
               </div>
             </motion.div>
           </div>
@@ -485,4 +551,3 @@ export function FinalCTA() {
     </section>
   );
 }
-

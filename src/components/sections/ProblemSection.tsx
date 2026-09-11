@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -62,11 +63,23 @@ export function ProblemSection() {
           w-full
           items-center
           overflow-hidden
-          pt-20
-          sm:pt-24
-          lg:pt-28
         "
       >
+        {/* Header safe area */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            inset-x-0
+            top-0
+            h-20
+            bg-base
+            sm:h-24
+            lg:h-28
+          "
+        />
+
         <Container
           className="
             relative
@@ -75,12 +88,15 @@ export function ProblemSection() {
             w-full
             items-center
             justify-center
+            px-5
+            pt-20
+            sm:px-8
+            sm:pt-24
+            lg:px-10
+            lg:pt-28
           "
         >
-          {/* ================================================
-              BACKGROUND ATMOSPHERE
-              ================================================ */}
-
+          {/* Background atmosphere */}
           <div
             aria-hidden="true"
             className="
@@ -102,10 +118,7 @@ export function ProblemSection() {
             "
           />
 
-          {/* ================================================
-              MAIN CONTENT
-              ================================================ */}
-
+          {/* Main content */}
           <div
             className="
               relative
@@ -119,10 +132,7 @@ export function ProblemSection() {
               text-center
             "
           >
-            {/* ================================================
-                SECTION HEADING
-                ================================================ */}
-
+            {/* Section heading */}
             <motion.div
               initial={
                 reducedMotion
@@ -148,16 +158,14 @@ export function ProblemSection() {
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
-                mb-10
+                mb-8
                 w-full
                 max-w-4xl
                 px-4
-                sm:mb-14
-                lg:mb-16
+                sm:mb-10
+                lg:mb-12
               "
             >
-              {/* Eyebrow */}
-
               <span
                 className="
                   mb-4
@@ -173,8 +181,6 @@ export function ProblemSection() {
               >
                 المشكلة
               </span>
-
-              {/* Main Heading */}
 
               <h2
                 className="
@@ -193,24 +199,21 @@ export function ProblemSection() {
               </h2>
             </motion.div>
 
-            {/* ================================================
-                PROBLEM STORY
-                ================================================ */}
-
+            {/* Problem story */}
             <div
               className="
                 relative
                 flex
-                min-h-[170px]
+                min-h-[150px]
                 w-full
                 items-center
                 justify-center
                 overflow-hidden
                 px-5
-                sm:min-h-[210px]
+                sm:min-h-[190px]
                 sm:px-8
-                md:min-h-[240px]
-                lg:min-h-[270px]
+                md:min-h-[220px]
+                lg:min-h-[250px]
               "
             >
               <AnimatePresence
@@ -263,8 +266,6 @@ export function ProblemSection() {
                     justify-center
                   "
                 >
-                  {/* Number */}
-
                   <span
                     className="
                       mb-4
@@ -278,8 +279,6 @@ export function ProblemSection() {
                   >
                     {String(activeIndex + 1).padStart(2, '0')}
                   </span>
-
-                  {/* Problem */}
 
                   <p
                     className="
@@ -302,18 +301,15 @@ export function ProblemSection() {
               </AnimatePresence>
             </div>
 
-            {/* ================================================
-                PROGRESS DOTS
-                ================================================ */}
-
+            {/* Progress */}
             <div
               className="
-                mt-8
+                mt-7
                 flex
                 items-center
                 justify-center
                 gap-2
-                sm:mt-10
+                sm:mt-8
               "
               aria-hidden="true"
             >
@@ -339,10 +335,7 @@ export function ProblemSection() {
               })}
             </div>
 
-            {/* ================================================
-                FINAL MESSAGE
-                ================================================ */}
-
+            {/* Final message */}
             <motion.div
               initial={false}
               animate={{
@@ -355,10 +348,10 @@ export function ProblemSection() {
               }}
               className="
                 pointer-events-none
-                mt-10
+                mt-8
                 max-w-3xl
                 text-center
-                sm:mt-12
+                sm:mt-10
               "
               aria-hidden={!isLastPoint}
             >

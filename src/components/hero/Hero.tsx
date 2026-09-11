@@ -1,3 +1,4 @@
+
 import {
   AnimatePresence,
   motion,
@@ -199,11 +200,6 @@ export function Hero() {
   const [
     isMobile,
     setIsMobile,
-  ] = useState(false);
-
-  const [
-    videosReady,
-    setVideosReady,
   ] = useState(false);
 
   const [
@@ -487,8 +483,12 @@ export function Hero() {
           preloadPromises,
         );
 
-        if (!cancelled) {
-          setVideosReady(true);
+        /*
+         * لا نحتاج videosReady هنا.
+         * الـGIF يعمل تلقائيًا بمجرد تحميله.
+         */
+        if (cancelled) {
+          return;
         }
       };
 
@@ -724,17 +724,15 @@ export function Hero() {
 
         /*
          * ====================================================
-         * GIF CROSSFADE PREPARATION
+         * GIF CROSSFADE
          * ====================================================
          *
          * الـGIF لا يدعم currentTime.
          *
          * لذلك:
          * - المشهد الحالي يظهر بشكل كامل.
-         * - المشهد التالي يتم إظهاره تدريجيًا عند الاقتراب
+         * - المشهد التالي يظهر تدريجيًا عند الاقتراب
          *   من نهاية المشهد الحالي.
-         *
-         * التحكم في المشاهد يبقى مرتبطًا بالـscroll مباشرة.
          */
 
         const currentImage =
@@ -746,6 +744,26 @@ export function Hero() {
           imageRefs.current[
             sceneIndex + 1
           ];
+
+        /*
+         * إعادة ضبط الصور الأخرى حتى لا تبقى
+         * صورة قديمة ظاهرة أثناء الانتقال.
+         */
+        imageRefs.current.forEach(
+          (image, index) => {
+            if (!image) {
+              return;
+            }
+
+            if (
+              index !== sceneIndex &&
+              index !== sceneIndex + 1
+            ) {
+              image.style.opacity =
+                "0";
+            }
+          },
+        );
 
         if (currentImage) {
           currentImage.style.opacity =
@@ -817,8 +835,8 @@ export function Hero() {
      * GIF نفسه لا يمكن إيقافه بشكل موثوق
      * باستخدام pause().
      *
-     * عند reduced motion نثبت opacity
-     * على المشهد الحالي فقط.
+     * عند reduced motion نثبت المشهد
+     * المرئي من ناحية الـopacity.
      */
     imageRefs.current.forEach(
       (image, index) => {
@@ -980,6 +998,10 @@ export function Hero() {
             },
           )}
         </div>
+
+        {/* ==================================================
+            GLASS / BLUR OVERLAY
+            ================================================== */}
 
         <div
           className="
@@ -1315,10 +1337,6 @@ export function Hero() {
             </AnimatePresence>
           </div>
         </div>
-
-        {/* ==================================================
-            BRAND / TOP
-            ================================================== */}
 
         {/* ==================================================
             PROGRESS INDICATOR

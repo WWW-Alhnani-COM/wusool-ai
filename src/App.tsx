@@ -6,7 +6,7 @@ import { SectorsPage } from "@/pages/SectorsPage";
 import { HowWeWorkPage } from "@/pages/HowWeWorkPage";
 import { AboutPage } from "@/pages/AboutPage";
 import { ContactPage } from "@/pages/ContactPage";
-import { ConsultationPage } from "@/pages/ConsultationPage";
+import ConsultationPage from "@/pages/ConsultationPage";
 import { LegalPage } from "@/pages/LegalPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 

@@ -9,6 +9,9 @@
     "lint": "eslint . --ext ts,tsx",
     "preview": "vite preview"
   },
+  "allowScripts": {
+    "esbuild@0.21.5": true
+  },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

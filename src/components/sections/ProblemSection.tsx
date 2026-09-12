@@ -70,21 +70,21 @@ export function ProblemSection() {
         "
       >
         <Container
-          className="
-            relative
-            flex
-            h-full
-            w-full
-            items-center
-            justify-center
-            px-5
-            py-16
-            sm:px-8
-            sm:py-20
-            lg:px-10
-            lg:py-24
-          "
-        >
+         className="
+  relative
+  z-30
+  flex
+  w-full
+  max-w-4xl
+  translate-y-8
+  flex-col
+  items-center
+  justify-center
+  text-center
+  sm:translate-y-10
+  lg:translate-y-12
+"
+          >
           {/* Background atmosphere */}
           <div
             aria-hidden="true"

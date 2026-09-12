@@ -145,10 +145,18 @@ export function Header() {
     جِذع
   </span>
 
-  <span
-    className="-ml-1.5 font-english text-sm font-semibold tracking-[0.08em] text-brass sm:text-base"
-    dir="ltr"
-  >
+ <span
+  className="
+    -ml-1.5
+    font-english
+    text-sm
+    font-semibold
+    tracking-[0.08em]
+    text-[#C89B5C]
+    sm:text-base
+  "
+  dir="ltr"
+>
     AI
   </span>
 </NavLink>

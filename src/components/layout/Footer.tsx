@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 
 import { siteNav } from "@/data/content";
@@ -60,27 +59,53 @@ export function Footer() {
               gap-14
               lg:grid-cols-[1.5fr_1fr_1fr]
               lg:gap-16
-          "
+            "
           >
             {/* Brand */}
             <div className="max-w-md">
               <Link
                 to="/"
+                aria-label="جِذع AI"
                 className="
                   inline-flex
-                  items-baseline
+                  items-center
+                  gap-2.5
                   font-display
                   text-2xl
                   font-semibold
                   tracking-tight
                   text-ink
-                  transition-colors
+                  transition-opacity
                   duration-300
-                  hover:text-brass
+                  hover:opacity-80
                 "
               >
-                جِذع
-                <span className="mr-1 text-brass">AI</span>
+                <img
+                  src="/favicon.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="
+                    h-8
+                    w-8
+                    shrink-0
+                    rounded-lg
+                    object-contain
+                    sm:h-9
+                    sm:w-9
+                  "
+                />
+
+                <span>جِذع</span>
+
+                <span
+                  className="
+                    mr-[-0.35rem]
+                    !text-[#C89B5C]
+                  "
+                  dir="ltr"
+                >
+                  AI
+                </span>
               </Link>
 
               <p
@@ -289,5 +314,3 @@ function FooterLink({
     </li>
   );
 }
-
-

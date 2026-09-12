@@ -235,6 +235,7 @@ export function SolutionsPage() {
                         lg:px-8
                       "
                     >
+                      {/* Active indicator */}
                       <motion.span
                         aria-hidden="true"
                         className="
@@ -282,20 +283,24 @@ export function SolutionsPage() {
                         {String(index + 1).padStart(2, '0')}
                       </span>
 
-                      {/* Solution title — ALWAYS WHITE */}
+                      {/* Solution title */}
                       <span
-                        className="
+                        className={`
                           min-w-0
                           flex-1
                           font-display
                           text-sm
                           font-medium
                           leading-7
-                          !text-white
                           transition-colors
                           duration-300
                           sm:text-base
-                        "
+                          ${
+                            isActive
+                              ? '!text-brass'
+                              : '!text-white'
+                          }
+                        `}
                       >
                         {service.title}
                       </span>
@@ -663,4 +668,3 @@ export function SolutionsPage() {
     </>
   );
 }
-

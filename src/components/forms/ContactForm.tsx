@@ -43,24 +43,18 @@ export function ContactForm() {
 
     setStatus("submitting");
     try {
-      const endpoint = import.meta.env.VITE_CONTACT_FORM_ENDPOINT as string | undefined;
-      if (!endpoint) {
-        // No backend configured yet — surface a clear state instead of
-        // pretending the message was sent.
-        console.warn("VITE_CONTACT_FORM_ENDPOINT is not set.");
-        setStatus("error");
-        return;
-      }
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: sanitizeInput(values.name),
-          email: sanitizeInput(values.email),
-          phone: sanitizeInput(values.phone),
-          message: sanitizeInput(values.message),
-        }),
-      });
+     const res = await fetch("/api/contact", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: sanitizeInput(values.name),
+    email: sanitizeInput(values.email),
+    phone: sanitizeInput(values.phone),
+    message: sanitizeInput(values.message),
+  }),
+});
       if (!res.ok) throw new Error("submit_failed");
       setStatus("success");
       setValues(initialState);

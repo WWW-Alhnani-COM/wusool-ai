@@ -404,9 +404,7 @@ export function ContactPage() {
                     }}
                     transition={{
                       duration: reducedMotion ? 0 : 0.5,
-                      delay: reducedMotion
-                        ? 0
-                        : index * 0.08,
+                      delay: reducedMotion ? 0 : index * 0.08,
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     className="
@@ -521,7 +519,7 @@ export function ContactPage() {
               </div>
 
               {/* ===================================================
-                  WHATSAPP DIRECT CONTACT
+                  PREMIUM WHATSAPP DIRECT CONTACT
               =================================================== */}
               <div className="mt-10 border-t border-base-line pt-8">
                 <div className="mb-5">
@@ -567,6 +565,7 @@ export function ContactPage() {
                     relative
                     block
                     w-full
+                    max-w-[560px]
                     overflow-hidden
                     border
                     border-base-line
@@ -575,6 +574,9 @@ export function ContactPage() {
                     duration-500
                     hover:border-brass/50
                     hover:bg-white/[0.03]
+                    focus-visible:outline-none
+                    focus-visible:ring-1
+                    focus-visible:ring-brass/70
                   "
                 >
                   {/* Ambient glow */}
@@ -585,8 +587,8 @@ export function ContactPage() {
                       absolute
                       -right-16
                       -top-16
-                      h-40
-                      w-40
+                      h-44
+                      w-44
                       rounded-full
                       bg-brass/[0.055]
                       opacity-0
@@ -613,162 +615,215 @@ export function ContactPage() {
                     "
                   />
 
-                  <div
+                  {/* Main card content */}
+                  <span
                     className="
                       relative
                       flex
-                      items-center
+                      flex-col
                       gap-4
-                      p-5
+                      p-4
+                      sm:flex-row
+                      sm:items-center
                       sm:gap-5
-                      sm:p-6
+                      sm:p-5
+                      lg:p-6
                     "
                   >
-                    {/* WhatsApp icon */}
+                    {/* Icon + text */}
                     <span
                       className="
-                        relative
                         flex
-                        h-12
-                        w-12
-                        shrink-0
+                        min-w-0
                         items-center
-                        justify-center
-                        border
-                        border-base-line
-                        bg-base-raised
-                        text-brass
-                        transition-all
-                        duration-500
-                        group-hover:border-brass/50
-                        group-hover:bg-brass/[0.07]
+                        gap-4
+                        sm:flex-1
                       "
                     >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        className="
-                          h-6
-                          w-6
-                          transition-transform
-                          duration-500
-                          group-hover:scale-110
-                        "
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M20.52 3.48A11.87 11.87 0 0 0 12.08 0C5.52 0 .18 5.34.18 11.9c0 2.1.55 4.15 1.59 5.96L.08 24l6.28-1.65a11.9 11.9 0 0 0 5.72 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.17-3.47-8.43Z"
-                          fill="currentColor"
-                          opacity="0.16"
-                        />
-
-                        <path
-                          d="M7.1 5.7c.24-.54.5-.55.91-.56h.31c.29 0 .61.1.74.46l.94 2.28c.08.2.08.4-.02.58l-.6 1.02c-.12.2-.13.36-.03.53.37.64.98 1.42 1.71 2.04.89.75 1.65.98 2 .1.09.24.08.38-.09l.78-.91c.16-.19.35-.22.58-.12l2.15 1.02c.27.13.44.19.5.31.07.13.07.71-.17 1.36-.23.65-1.34 1.24-1.85 1.31-.47.07-1.04.1-1.68-.1-.39-.12-.89-.29-1.52-.57-2.67-1.14-4.41-3.82-4.55-4-.14-.19-1.08-1.44-1.08-2.74 0-1.3.68-1.95.92-2.31Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-
-                      {/* Online indicator */}
-                      <span
-                        aria-hidden="true"
-                        className="
-                          absolute
-                          -right-1
-                          -top-1
-                          h-2.5
-                          w-2.5
-                          rounded-full
-                          bg-brass
-                          ring-2
-                          ring-base
-                        "
-                      />
-                    </span>
-
-                    {/* Text */}
-                    <span className="min-w-0 flex-1">
+                      {/* WhatsApp icon */}
                       <span
                         className="
-                          block
-                          font-mono
-                          text-[9px]
-                          font-medium
-                          tracking-[0.17em]
+                          relative
+                          flex
+                          h-11
+                          w-11
+                          shrink-0
+                          items-center
+                          justify-center
+                          border
+                          border-base-line
+                          bg-base-raised
                           text-brass
+                          transition-all
+                          duration-500
+                          group-hover:border-brass/50
+                          group-hover:bg-brass/[0.07]
+                          sm:h-12
+                          sm:w-12
                         "
                       >
-                        WHATSAPP
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="
+                            h-[22px]
+                            w-[22px]
+                            transition-transform
+                            duration-500
+                            group-hover:scale-110
+                          "
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M20.52 3.48A11.87 11.87 0 0 0 12.08 0C5.52 0 .18 5.34.18 11.9c0 2.1.55 4.15 1.59 5.96L.08 24l6.28-1.65a11.9 11.9 0 0 0 5.72 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.17-3.47-8.43Z"
+                            fill="currentColor"
+                            opacity="0.16"
+                          />
+
+                          <path
+                            d="M7.1 5.7c.24-.54.5-.55.91-.56h.31c.29 0 .61.1.74.46l.94 2.28c.08.2.08.4-.02.58l-.6 1.02c-.12.2-.13.36-.03.53.37.64.98 1.42 1.71 2.04.89.75 1.65.98 2 .1.09.24.08.38-.09l.78-.91c.16-.19.35-.22.58-.12l2.15 1.02c.27.13.44.19.5.31.07.13.07.71-.17 1.36-.23.65-1.34 1.24-1.85 1.31-.47.07-1.04.1-1.68-.1-.39-.12-.89-.29-1.52-.57-2.67-1.14-4.41-3.82-4.55-4-.14-.19-1.08-1.44-1.08-2.74 0-1.3.68-1.95.92-2.31Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+
+                        {/* Online indicator */}
+                        <span
+                          aria-hidden="true"
+                          className="
+                            absolute
+                            -right-1
+                            -top-1
+                            h-2.5
+                            w-2.5
+                            rounded-full
+                            bg-brass
+                            ring-2
+                            ring-base
+                          "
+                        />
                       </span>
 
-                      <span
-                        className="
-                          mt-1.5
-                          block
-                          font-display
-                          text-base
-                          font-semibold
-                          text-ink
-                          transition-colors
-                          duration-300
-                          group-hover:text-brass
-                          sm:text-lg
-                        "
-                      >
-                        تواصل معنا عبر واتساب
-                      </span>
+                      {/* Text */}
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className="
+                            block
+                            font-mono
+                            text-[8px]
+                            font-medium
+                            tracking-[0.17em]
+                            text-brass
+                            sm:text-[9px]
+                          "
+                        >
+                          WHATSAPP
+                        </span>
 
-                      <span
-                        className="
-                          mt-1
-                          block
-                          text-xs
-                          leading-6
-                          text-ink-faint
-                        "
-                      >
-                        تحدث معنا مباشرة حول منشأتك واحتياجك.
+                        <span
+                          className="
+                            mt-1.5
+                            block
+                            font-display
+                            text-sm
+                            font-semibold
+                            leading-6
+                            text-ink
+                            transition-colors
+                            duration-300
+                            group-hover:text-brass
+                            sm:text-base
+                            lg:text-lg
+                          "
+                        >
+                          تواصل معنا عبر واتساب
+                        </span>
+
+                        <span
+                          className="
+                            mt-0.5
+                            block
+                            text-[11px]
+                            leading-5
+                            text-ink-faint
+                            sm:text-xs
+                            sm:leading-6
+                          "
+                        >
+                          تحدث معنا مباشرة حول منشأتك واحتياجك.
+                        </span>
                       </span>
                     </span>
 
-                    {/* Arrow */}
+                    {/* Mobile / desktop action */}
                     <span
-                      aria-hidden="true"
                       className="
                         flex
-                        h-9
-                        w-9
-                        shrink-0
+                        w-full
                         items-center
-                        justify-center
-                        border
+                        justify-between
+                        border-t
                         border-base-line
-                        text-ink-faint
-                        transition-all
-                        duration-500
-                        group-hover:-translate-x-1
-                        group-hover:border-brass/40
-                        group-hover:text-brass
+                        pt-3
+                        sm:w-auto
+                        sm:shrink-0
+                        sm:border-0
+                        sm:pt-0
                       "
-                      dir="ltr"
                     >
-                      <svg
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        className="h-4 w-4"
+                      <span
+                        className="
+                          font-mono
+                          text-[8px]
+                          tracking-[0.12em]
+                          text-ink-faint
+                          sm:hidden
+                        "
                       >
-                        <path
-                          d="M4 10h11M11 6l4 4-4 4"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                        DIRECT CONTACT
+                      </span>
+
+                      {/* Arrow */}
+                      <span
+                        aria-hidden="true"
+                        className="
+                          flex
+                          h-8
+                          w-8
+                          shrink-0
+                          items-center
+                          justify-center
+                          border
+                          border-base-line
+                          text-ink-faint
+                          transition-all
+                          duration-500
+                          group-hover:-translate-x-1
+                          group-hover:border-brass/40
+                          group-hover:text-brass
+                          sm:h-9
+                          sm:w-9
+                        "
+                        dir="ltr"
+                      >
+                        <svg
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          className="h-4 w-4"
+                        >
+                          <path
+                            d="M4 10h11M11 6l4 4-4 4"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
                     </span>
-                  </div>
+                  </span>
 
                   {/* Bottom metadata */}
-                  <div
+                  <span
                     className="
                       relative
                       flex
@@ -776,18 +831,19 @@ export function ContactPage() {
                       justify-between
                       border-t
                       border-base-line
-                      px-5
-                      py-3
-                      sm:px-6
+                      px-4
+                      py-2.5
+                      sm:px-5
+                      lg:px-6
                     "
                   >
                     <span
                       className="
                         font-mono
-                        text-[8px]
+                        text-[7px]
                         tracking-[0.12em]
                         text-ink-faint
-                        sm:text-[9px]
+                        sm:text-[8px]
                       "
                     >
                       JITHR AI / DIRECT
@@ -797,12 +853,12 @@ export function ContactPage() {
                       className="
                         flex
                         items-center
-                        gap-2
+                        gap-1.5
                         font-mono
-                        text-[8px]
+                        text-[7px]
                         tracking-[0.12em]
                         text-ink-faint
-                        sm:text-[9px]
+                        sm:text-[8px]
                       "
                     >
                       <span
@@ -817,7 +873,7 @@ export function ContactPage() {
 
                       ONLINE
                     </span>
-                  </div>
+                  </span>
                 </a>
               </div>
             </div>

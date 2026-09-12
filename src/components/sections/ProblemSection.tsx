@@ -69,19 +69,22 @@ export function ProblemSection() {
           lg:h-[calc(100vh-7rem)]
         "
       >
-        <Container
-          className="
-            relative
-            flex
-            h-full
-            w-full
-            items-center
-            justify-center
-            px-5
-            sm:px-8
-            lg:px-10
-          "
-        >
+ <Container
+  className="
+    relative
+    flex
+    h-full
+    w-full
+    items-center
+    justify-center
+    px-5
+    py-16
+    sm:px-8
+    sm:py-20
+    lg:px-10
+    lg:py-24
+  "
+>
           {/* Background atmosphere */}
           <div
             aria-hidden="true"

@@ -8,26 +8,12 @@ export function SolutionPath() {
   const { path } = solutionContent;
 
   return (
-    <section
-      className="py-24 sm:py-32 border-t"
-      style={{
-        backgroundColor: "#050505",
-        borderColor: "#1D1D1D",
-      }}
-    >
+    <section className="py-24 sm:py-32 border-t border-base-line bg-base">
       <Container className="flex flex-col gap-16">
-
-        {/* Heading */}
-        <h2
-          className="font-display text-3xl sm:text-4xl lg:text-5xl leading-[1.15] text-right max-w-2xl mr-0 ml-auto"
-          style={{
-            color: "#FFFFFF",
-          }}
-        >
+        <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl leading-[1.15] text-ink text-right max-w-2xl mr-0 ml-auto">
           {solutionContent.heading}
         </h2>
 
-        {/* Solution Path */}
         <div className="flex flex-col sm:flex-row-reverse sm:items-center gap-6 sm:gap-0">
           {path.map((stage, i) => (
             <div
@@ -54,43 +40,24 @@ export function SolutionPath() {
                 }}
                 className="flex flex-col items-center gap-3 shrink-0"
               >
-                {/* Number */}
-                <span
-                  className="h-12 w-12 rounded-full flex items-center justify-center text-sm"
-                  style={{
-                    color: "#C89B5C",
-                    backgroundColor: "#0B0B0B",
-                    border: "1px solid rgba(200, 155, 92, 0.6)",
-                  }}
-                >
+                <span className="h-12 w-12 rounded-full border border-brass/60 bg-base-raised flex items-center justify-center text-brass text-sm">
                   {String(i + 1).padStart(2, "0")}
                 </span>
 
-                {/* Service name */}
-                <span
-                  className="text-sm sm:text-base whitespace-nowrap font-medium"
-                  style={{
-                    color: "#FFFFFF",
-                  }}
-                >
+                <span className="text-ink text-sm sm:text-base whitespace-nowrap font-medium">
                   {stage}
                 </span>
               </motion.div>
 
-              {/* Connecting line */}
               {i < path.length - 1 && (
                 <span
-                  className="hidden sm:block flex-1 h-px mx-2"
-                  style={{
-                    backgroundColor: "#1D1D1D",
-                  }}
+                  className="hidden sm:block flex-1 h-px bg-base-line mx-2"
                   aria-hidden="true"
                 />
               )}
             </div>
           ))}
         </div>
-
       </Container>
     </section>
   );

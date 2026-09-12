@@ -48,6 +48,8 @@ export function ProblemSection() {
       dir="rtl"
       className="
         relative
+        z-20
+        isolate
         h-[300vh]
         bg-base
       "
@@ -55,30 +57,18 @@ export function ProblemSection() {
       <div
         className="
           sticky
-          top-0
-          z-10
+          top-20
+          z-20
           flex
-          h-screen
+          h-[calc(100vh-5rem)]
           w-full
           items-center
-          overflow-hidden
+          sm:top-24
+          sm:h-[calc(100vh-6rem)]
+          lg:top-28
+          lg:h-[calc(100vh-7rem)]
         "
       >
-        {/* Header safe area */}
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            inset-x-0
-            top-0
-            h-20
-            bg-base
-            sm:h-24
-            lg:h-28
-          "
-        />
-
         <Container
           className="
             relative
@@ -88,11 +78,8 @@ export function ProblemSection() {
             items-center
             justify-center
             px-5
-            pt-20
             sm:px-8
-            sm:pt-24
             lg:px-10
-            lg:pt-28
           "
         >
           {/* Background atmosphere */}
@@ -121,7 +108,7 @@ export function ProblemSection() {
           <div
             className="
               relative
-              z-20
+              z-30
               flex
               w-full
               max-w-5xl
@@ -157,24 +144,24 @@ export function ProblemSection() {
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
-                mb-8
+                mb-6
                 w-full
                 max-w-4xl
                 px-4
-                sm:mb-10
-                lg:mb-12
+                sm:mb-8
+                lg:mb-10
               "
             >
               <span
                 className="
-                  mb-4
+                  mb-3
                   block
                   text-xs
                   font-medium
                   uppercase
                   tracking-[0.25em]
                   text-brass
-                  sm:mb-5
+                  sm:mb-4
                   sm:text-sm
                 "
               >
@@ -203,16 +190,15 @@ export function ProblemSection() {
               className="
                 relative
                 flex
-                min-h-[150px]
+                min-h-[130px]
                 w-full
                 items-center
                 justify-center
-                overflow-hidden
                 px-5
-                sm:min-h-[190px]
+                sm:min-h-[160px]
                 sm:px-8
-                md:min-h-[220px]
-                lg:min-h-[250px]
+                md:min-h-[190px]
+                lg:min-h-[220px]
               "
             >
               <AnimatePresence
@@ -267,12 +253,13 @@ export function ProblemSection() {
                 >
                   <span
                     className="
-                      mb-4
+                      mb-3
                       text-xs
                       font-medium
                       uppercase
                       tracking-[0.22em]
                       text-brass/80
+                      sm:mb-4
                       sm:text-sm
                     "
                   >
@@ -303,12 +290,12 @@ export function ProblemSection() {
             {/* Progress */}
             <div
               className="
-                mt-7
+                mt-5
                 flex
                 items-center
                 justify-center
                 gap-2
-                sm:mt-8
+                sm:mt-6
               "
               aria-hidden="true"
             >
@@ -347,10 +334,10 @@ export function ProblemSection() {
               }}
               className="
                 pointer-events-none
-                mt-8
+                mt-6
                 max-w-3xl
                 text-center
-                sm:mt-10
+                sm:mt-8
               "
               aria-hidden={!isLastPoint}
             >
@@ -383,20 +370,10 @@ export function ProblemSection() {
                 المشكلة أنها لا تعمل معًا.
               </p>
             </motion.div>
-
-            {/* Spacing after the final element */}
-            <div
-              aria-hidden="true"
-              className="
-                h-10
-                w-full
-                sm:h-12
-                lg:h-16
-              "
-            />
           </div>
         </Container>
       </div>
     </section>
   );
 }
+

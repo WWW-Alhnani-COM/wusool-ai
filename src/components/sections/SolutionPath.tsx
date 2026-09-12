@@ -10,7 +10,6 @@ export function SolutionPath() {
   return (
     <section className="bg-[#050505] py-24 sm:py-32 border-t border-[#1D1D1D]">
       <Container className="flex flex-col gap-16">
-        {/* Heading */}
         <h2
           className="
             font-display
@@ -18,7 +17,7 @@ export function SolutionPath() {
             sm:text-4xl
             lg:text-5xl
             leading-[1.15]
-            text-[#F5F5F5]
+            !text-white
             text-right
             max-w-2xl
             mr-0
@@ -28,7 +27,6 @@ export function SolutionPath() {
           {solutionContent.heading}
         </h2>
 
-        {/* Solution path */}
         <div className="flex flex-col sm:flex-row-reverse sm:items-center gap-6 sm:gap-0">
           {path.map((stage, i) => (
             <div
@@ -67,9 +65,8 @@ export function SolutionPath() {
                     flex
                     items-center
                     justify-center
-                    text-[#C89B5C]
+                    !text-[#C89B5C]
                     text-sm
-                    font-english
                   "
                 >
                   {String(i + 1).padStart(2, "0")}
@@ -78,7 +75,7 @@ export function SolutionPath() {
                 {/* Service name */}
                 <span
                   className="
-                    text-[#F5F5F5]
+                    !text-white
                     text-sm
                     sm:text-base
                     whitespace-nowrap

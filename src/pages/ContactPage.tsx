@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 
 import { ContactForm } from '@/components/forms/ContactForm';
 import { Container } from '@/components/ui/Container';
-import { WhatsAppCTA } from '@/components/ui/WhatsAppCTA';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const contactSteps = [
@@ -33,6 +32,9 @@ const contactTopics = [
   'ربط الأنظمة والقنوات',
   'تحليل البيانات والمحادثات',
 ];
+
+const whatsappLink =
+  'https://wa.me/966552173887?text=%D9%85%D8%B1%D8%AD%D8%A8%D9%8B%D8%A7%D8%8C%20%D8%A3%D8%A8%D8%BA%D9%89%20%D8%A3%D8%B3%D8%AA%D9%81%D8%B3%D8%B1%20%D8%B9%D9%86%20%D8%AD%D9%84%D9%88%D9%84%20%D8%AC%D8%B0%D8%B9%20AI.';
 
 export function ContactPage() {
   const reducedMotion = useReducedMotion();
@@ -68,6 +70,22 @@ export function ContactPage() {
             rounded-full
             bg-brass/[0.045]
             blur-[150px]
+          "
+        />
+
+        {/* Secondary glow */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            right-[12%]
+            top-[18%]
+            h-32
+            w-32
+            rounded-full
+            bg-brass/[0.025]
+            blur-[80px]
           "
         />
 
@@ -281,6 +299,25 @@ export function ContactPage() {
           01
         </div>
 
+        {/* Background vertical accent */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            bottom-0
+            right-[8%]
+            top-0
+            hidden
+            w-px
+            bg-gradient-to-b
+            from-transparent
+            via-base-line
+            to-transparent
+            lg:block
+          "
+        />
+
         <Container className="relative">
           <div
             className="
@@ -470,9 +507,10 @@ export function ContactPage() {
                         py-2
                         text-xs
                         text-ink-muted
-                        transition-colors
+                        transition-all
                         duration-300
                         hover:border-brass/50
+                        hover:bg-brass/[0.025]
                         hover:text-ink
                       "
                     >
@@ -482,20 +520,305 @@ export function ContactPage() {
                 </div>
               </div>
 
-              {/* WhatsApp */}
+              {/* ===================================================
+                  WHATSAPP DIRECT CONTACT
+              =================================================== */}
               <div className="mt-10 border-t border-base-line pt-8">
-                <p
+                <div className="mb-5">
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-3
+                      font-mono
+                      text-[9px]
+                      font-medium
+                      tracking-[0.18em]
+                      text-brass
+                    "
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="h-px w-6 bg-brass/60"
+                    />
+
+                    <span>DIRECT CONTACT</span>
+                  </div>
+
+                  <p
+                    className="
+                      mt-3
+                      text-sm
+                      leading-7
+                      text-ink-muted
+                    "
+                  >
+                    تفضّل التواصل مباشرة؟
+                  </p>
+                </div>
+
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="تواصل معنا عبر واتساب"
                   className="
-                    mb-5
-                    text-sm
-                    leading-7
-                    text-ink-muted
+                    group
+                    relative
+                    block
+                    w-full
+                    overflow-hidden
+                    border
+                    border-base-line
+                    bg-white/[0.015]
+                    transition-all
+                    duration-500
+                    hover:border-brass/50
+                    hover:bg-white/[0.03]
                   "
                 >
-                  تفضّل التواصل مباشرة؟
-                </p>
+                  {/* Ambient glow */}
+                  <span
+                    aria-hidden="true"
+                    className="
+                      pointer-events-none
+                      absolute
+                      -right-16
+                      -top-16
+                      h-40
+                      w-40
+                      rounded-full
+                      bg-brass/[0.055]
+                      opacity-0
+                      blur-3xl
+                      transition-opacity
+                      duration-500
+                      group-hover:opacity-100
+                    "
+                  />
 
-                <WhatsAppCTA />
+                  {/* Top animated line */}
+                  <span
+                    aria-hidden="true"
+                    className="
+                      absolute
+                      right-0
+                      top-0
+                      h-px
+                      w-0
+                      bg-brass
+                      transition-all
+                      duration-700
+                      group-hover:w-full
+                    "
+                  />
+
+                  <div
+                    className="
+                      relative
+                      flex
+                      items-center
+                      gap-4
+                      p-5
+                      sm:gap-5
+                      sm:p-6
+                    "
+                  >
+                    {/* WhatsApp icon */}
+                    <span
+                      className="
+                        relative
+                        flex
+                        h-12
+                        w-12
+                        shrink-0
+                        items-center
+                        justify-center
+                        border
+                        border-base-line
+                        bg-base-raised
+                        text-brass
+                        transition-all
+                        duration-500
+                        group-hover:border-brass/50
+                        group-hover:bg-brass/[0.07]
+                      "
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="
+                          h-6
+                          w-6
+                          transition-transform
+                          duration-500
+                          group-hover:scale-110
+                        "
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M20.52 3.48A11.87 11.87 0 0 0 12.08 0C5.52 0 .18 5.34.18 11.9c0 2.1.55 4.15 1.59 5.96L.08 24l6.28-1.65a11.9 11.9 0 0 0 5.72 1.46h.01c6.56 0 11.9-5.34 11.9-11.9 0-3.18-1.24-6.17-3.47-8.43Z"
+                          fill="currentColor"
+                          opacity="0.16"
+                        />
+
+                        <path
+                          d="M7.1 5.7c.24-.54.5-.55.91-.56h.31c.29 0 .61.1.74.46l.94 2.28c.08.2.08.4-.02.58l-.6 1.02c-.12.2-.13.36-.03.53.37.64.98 1.42 1.71 2.04.89.75 1.65.98 2 .1.09.24.08.38-.09l.78-.91c.16-.19.35-.22.58-.12l2.15 1.02c.27.13.44.19.5.31.07.13.07.71-.17 1.36-.23.65-1.34 1.24-1.85 1.31-.47.07-1.04.1-1.68-.1-.39-.12-.89-.29-1.52-.57-2.67-1.14-4.41-3.82-4.55-4-.14-.19-1.08-1.44-1.08-2.74 0-1.3.68-1.95.92-2.31Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+
+                      {/* Online indicator */}
+                      <span
+                        aria-hidden="true"
+                        className="
+                          absolute
+                          -right-1
+                          -top-1
+                          h-2.5
+                          w-2.5
+                          rounded-full
+                          bg-brass
+                          ring-2
+                          ring-base
+                        "
+                      />
+                    </span>
+
+                    {/* Text */}
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className="
+                          block
+                          font-mono
+                          text-[9px]
+                          font-medium
+                          tracking-[0.17em]
+                          text-brass
+                        "
+                      >
+                        WHATSAPP
+                      </span>
+
+                      <span
+                        className="
+                          mt-1.5
+                          block
+                          font-display
+                          text-base
+                          font-semibold
+                          text-ink
+                          transition-colors
+                          duration-300
+                          group-hover:text-brass
+                          sm:text-lg
+                        "
+                      >
+                        تواصل معنا عبر واتساب
+                      </span>
+
+                      <span
+                        className="
+                          mt-1
+                          block
+                          text-xs
+                          leading-6
+                          text-ink-faint
+                        "
+                      >
+                        تحدث معنا مباشرة حول منشأتك واحتياجك.
+                      </span>
+                    </span>
+
+                    {/* Arrow */}
+                    <span
+                      aria-hidden="true"
+                      className="
+                        flex
+                        h-9
+                        w-9
+                        shrink-0
+                        items-center
+                        justify-center
+                        border
+                        border-base-line
+                        text-ink-faint
+                        transition-all
+                        duration-500
+                        group-hover:-translate-x-1
+                        group-hover:border-brass/40
+                        group-hover:text-brass
+                      "
+                      dir="ltr"
+                    >
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        className="h-4 w-4"
+                      >
+                        <path
+                          d="M4 10h11M11 6l4 4-4 4"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+
+                  {/* Bottom metadata */}
+                  <div
+                    className="
+                      relative
+                      flex
+                      items-center
+                      justify-between
+                      border-t
+                      border-base-line
+                      px-5
+                      py-3
+                      sm:px-6
+                    "
+                  >
+                    <span
+                      className="
+                        font-mono
+                        text-[8px]
+                        tracking-[0.12em]
+                        text-ink-faint
+                        sm:text-[9px]
+                      "
+                    >
+                      JITHR AI / DIRECT
+                    </span>
+
+                    <span
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        font-mono
+                        text-[8px]
+                        tracking-[0.12em]
+                        text-ink-faint
+                        sm:text-[9px]
+                      "
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="
+                          h-1.5
+                          w-1.5
+                          rounded-full
+                          bg-brass
+                        "
+                      />
+
+                      ONLINE
+                    </span>
+                  </div>
+                </a>
               </div>
             </div>
 
@@ -700,6 +1023,21 @@ export function ContactPage() {
             from-base-line
             via-brass/20
             to-transparent
+          "
+        />
+
+        {/* Decorative horizontal line */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            left-1/2
+            top-0
+            h-px
+            w-24
+            -translate-x-1/2
+            bg-brass/30
           "
         />
 

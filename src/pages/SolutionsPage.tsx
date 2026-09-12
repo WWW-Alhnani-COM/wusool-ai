@@ -255,6 +255,7 @@ export function SolutionsPage() {
                         }}
                       />
 
+                      {/* Number */}
                       <span
                         className={`
                           flex
@@ -281,27 +282,25 @@ export function SolutionsPage() {
                         {String(index + 1).padStart(2, '0')}
                       </span>
 
+                      {/* Solution title — WHITE */}
                       <span
-                        className={`
+                        className="
                           min-w-0
                           flex-1
                           font-display
                           text-sm
                           font-medium
                           leading-7
+                          text-ink
                           transition-colors
                           duration-300
                           sm:text-base
-                          ${
-                            isActive
-                              ? 'text-ink'
-                              : 'text-ink-muted group-hover:text-ink'
-                          }
-                        `}
+                        "
                       >
                         {service.title}
                       </span>
 
+                      {/* Arrow */}
                       <span
                         aria-hidden="true"
                         className={`

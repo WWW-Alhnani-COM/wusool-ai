@@ -32,15 +32,6 @@ export function ProblemSection() {
     offset: ['start start', 'end end'],
   });
 
-  /*
-   * Direct scroll → grid movement.
-   *
-   * No spring.
-   * No lerp.
-   * No animation delay.
-   *
-   * This keeps the grid synchronized with the user's scroll position.
-   */
   useMotionValueEvent(scrollYProgress, 'change', (latest) => {
     const total = problemContent.points.length;
 
@@ -59,9 +50,9 @@ export function ProblemSection() {
 
     const progress = Math.max(0, Math.min(1, latest));
 
-    const translateX = progress * -220;
-    const translateY = progress * -420;
-    const rotate = progress * 2;
+    const translateX = progress * -180;
+    const translateY = progress * -320;
+    const rotate = progress * 1.5;
 
     if (gridRef.current) {
       gridRef.current.style.transform =
@@ -79,12 +70,6 @@ export function ProblemSection() {
     }
   });
 
-  /*
-   * Pointer interaction.
-   *
-   * CSS variables are written directly to the DOM to avoid React
-   * re-renders on every pointer movement.
-   */
   const handlePointerMove = (
     event: PointerEvent<HTMLElement>,
   ) => {
@@ -150,9 +135,9 @@ export function ProblemSection() {
         bg-base
       "
     >
-      {/* =========================================================
-          TECHNICAL BACKGROUND SYSTEM
-          ========================================================= */}
+      {/* =====================================================
+          TECHNICAL GRID
+          ===================================================== */}
 
       <div
         aria-hidden="true"
@@ -164,34 +149,34 @@ export function ProblemSection() {
           overflow-hidden
         "
       >
-        {/* Main moving grid */}
+        {/* Main grid */}
         <div
           ref={gridRef}
           className="
             absolute
-            -inset-[25%]
+            -inset-[20%]
             will-change-transform
           "
           style={{
             backgroundImage: `
               linear-gradient(
                 to right,
-                rgba(200, 155, 92, 0.24) 1px,
+                rgba(200, 155, 92, 0.22) 1px,
                 transparent 1px
               ),
               linear-gradient(
                 to bottom,
-                rgba(200, 155, 92, 0.24) 1px,
+                rgba(200, 155, 92, 0.22) 1px,
                 transparent 1px
               ),
               linear-gradient(
                 to right,
-                rgba(255, 255, 255, 0.07) 1px,
+                rgba(255, 255, 255, 0.055) 1px,
                 transparent 1px
               ),
               linear-gradient(
                 to bottom,
-                rgba(255, 255, 255, 0.07) 1px,
+                rgba(255, 255, 255, 0.055) 1px,
                 transparent 1px
               )
             `,
@@ -202,44 +187,36 @@ export function ProblemSection() {
           }}
         />
 
-        {/* Pointer-reactive light */}
+        {/* Pointer glow */}
         <div
-          className="
-            absolute
-            inset-0
-            transition-opacity
-            duration-500
-          "
+          className="absolute inset-0"
           style={{
             background: `
               radial-gradient(
-                420px circle at var(--pointer-x) var(--pointer-y),
-                rgba(200, 155, 92, 0.16),
-                rgba(200, 155, 92, 0.06) 30%,
+                380px circle at var(--pointer-x) var(--pointer-y),
+                rgba(200, 155, 92, 0.15),
+                rgba(200, 155, 92, 0.05) 32%,
                 transparent 68%
               )
             `,
           }}
         />
 
-        {/* Secondary pointer glow */}
+        {/* Secondary pointer light */}
         <div
-          className="
-            absolute
-            inset-0
-          "
+          className="absolute inset-0"
           style={{
             background: `
               radial-gradient(
-                900px circle at var(--pointer-x) var(--pointer-y),
+                800px circle at var(--pointer-x) var(--pointer-y),
                 rgba(255, 255, 255, 0.035),
-                transparent 55%
+                transparent 58%
               )
             `,
           }}
         />
 
-        {/* Horizontal scan line */}
+        {/* Horizontal scan */}
         <div
           ref={scanLineRef}
           className="
@@ -250,14 +227,14 @@ export function ProblemSection() {
             w-full
             bg-gradient-to-r
             from-transparent
-            via-brass/50
+            via-brass/45
             to-transparent
             opacity-60
             will-change-transform
           "
         />
 
-        {/* Vertical scan line */}
+        {/* Vertical scan */}
         <div
           ref={scanLineVerticalRef}
           className="
@@ -268,14 +245,14 @@ export function ProblemSection() {
             w-px
             bg-gradient-to-b
             from-transparent
-            via-brass/40
+            via-brass/35
             to-transparent
             opacity-50
             will-change-transform
           "
         />
 
-        {/* Technical center axis */}
+        {/* Center vertical axis */}
         <div
           className="
             absolute
@@ -284,11 +261,11 @@ export function ProblemSection() {
             h-full
             w-px
             -translate-x-1/2
-            bg-brass/[0.08]
+            bg-brass/[0.07]
           "
         />
 
-        {/* Technical horizontal axis */}
+        {/* Center horizontal axis */}
         <div
           className="
             absolute
@@ -297,11 +274,11 @@ export function ProblemSection() {
             h-px
             w-full
             -translate-y-1/2
-            bg-brass/[0.08]
+            bg-brass/[0.07]
           "
         />
 
-        {/* Center technical node */}
+        {/* Center node */}
         <div
           className="
             absolute
@@ -315,7 +292,7 @@ export function ProblemSection() {
             border
             border-brass/50
             bg-base
-            shadow-[0_0_30px_rgba(200,155,92,0.25)]
+            shadow-[0_0_28px_rgba(200,155,92,0.25)]
           "
         />
 
@@ -330,48 +307,51 @@ export function ProblemSection() {
             -translate-y-1/2
             rounded-full
             border
-            border-brass/[0.15]
+            border-brass/[0.14]
           "
         />
 
-        {/* Edge fade */}
+        {/* Center fade */}
         <div
           className="
             absolute
             inset-0
-            bg-[radial-gradient(circle_at_center,transparent_20%,#050505_88%)]
+            bg-[radial-gradient(circle_at_center,transparent_15%,#050505_88%)]
           "
         />
 
-        {/* Top/bottom cinematic fade */}
+        {/* Top fade */}
         <div
           className="
             absolute
             inset-x-0
             top-0
-            h-40
+            h-28
             bg-gradient-to-b
             from-base
             to-transparent
+            sm:h-32
           "
         />
 
+        {/* Bottom fade */}
         <div
           className="
             absolute
             inset-x-0
             bottom-0
-            h-40
+            h-28
             bg-gradient-to-t
             from-base
             to-transparent
+            sm:h-32
           "
         />
       </div>
 
-      {/* =========================================================
+      {/* =====================================================
           STICKY CONTENT
-          ========================================================= */}
+          ===================================================== */}
 
       <div
         className="
@@ -395,13 +375,10 @@ export function ProblemSection() {
             flex
             w-full
             max-w-4xl
-            translate-y-8
             flex-col
             items-center
             justify-center
             text-center
-            sm:translate-y-10
-            lg:translate-y-12
           "
         >
           {/* Background atmosphere */}
@@ -412,21 +389,20 @@ export function ProblemSection() {
               absolute
               left-1/2
               top-1/2
-              h-[240px]
-              w-[240px]
+              h-[220px]
+              w-[220px]
               -translate-x-1/2
               -translate-y-1/2
               rounded-full
               bg-brass/5
-              blur-[90px]
-              sm:h-[340px]
-              sm:w-[340px]
-              lg:h-[420px]
-              lg:w-[420px]
+              blur-[80px]
+              sm:h-[300px]
+              sm:w-[300px]
+              lg:h-[360px]
+              lg:w-[360px]
             "
           />
 
-          {/* Content */}
           <div
             className="
               relative
@@ -440,7 +416,7 @@ export function ProblemSection() {
               text-center
             "
           >
-            {/* Section heading */}
+            {/* Heading */}
             <motion.div
               initial={
                 reducedMotion
@@ -450,7 +426,7 @@ export function ProblemSection() {
                     }
                   : {
                       opacity: 0,
-                      y: 30,
+                      y: 24,
                     }
               }
               whileInView={{
@@ -462,28 +438,25 @@ export function ProblemSection() {
                 amount: 0.2,
               }}
               transition={{
-                duration: reducedMotion ? 0 : 0.8,
+                duration: reducedMotion ? 0 : 0.7,
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
-                mb-5
                 w-full
                 max-w-3xl
                 px-4
-                sm:mb-7
-                lg:mb-8
               "
             >
               <span
                 className="
-                  mb-3
+                  mb-2
                   block
                   text-[10px]
                   font-medium
                   uppercase
                   tracking-[0.25em]
                   text-brass
-                  sm:mb-4
+                  sm:mb-3
                   sm:text-xs
                 "
               >
@@ -511,16 +484,19 @@ export function ProblemSection() {
             <div
               className="
                 relative
+                mt-4
                 flex
-                min-h-[100px]
+                min-h-[90px]
                 w-full
                 items-center
                 justify-center
                 px-5
-                sm:min-h-[120px]
+                sm:mt-5
+                sm:min-h-[110px]
                 sm:px-8
-                md:min-h-[145px]
-                lg:min-h-[170px]
+                md:min-h-[130px]
+                lg:mt-6
+                lg:min-h-[150px]
               "
             >
               <AnimatePresence
@@ -537,9 +513,9 @@ export function ProblemSection() {
                         }
                       : {
                           opacity: 0,
-                          y: 35,
-                          filter: 'blur(10px)',
-                          scale: 0.97,
+                          y: 25,
+                          filter: 'blur(8px)',
+                          scale: 0.98,
                         }
                   }
                   animate={{
@@ -555,13 +531,13 @@ export function ProblemSection() {
                         }
                       : {
                           opacity: 0,
-                          y: -25,
-                          filter: 'blur(8px)',
-                          scale: 1.02,
+                          y: -20,
+                          filter: 'blur(6px)',
+                          scale: 1.01,
                         }
                   }
                   transition={{
-                    duration: reducedMotion ? 0 : 0.5,
+                    duration: reducedMotion ? 0 : 0.45,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className="
@@ -575,13 +551,13 @@ export function ProblemSection() {
                 >
                   <span
                     className="
-                      mb-3
+                      mb-2
                       text-[10px]
                       font-medium
                       uppercase
                       tracking-[0.22em]
                       text-brass/80
-                      sm:mb-4
+                      sm:mb-3
                       sm:text-xs
                     "
                   >
@@ -612,13 +588,13 @@ export function ProblemSection() {
             {/* Progress */}
             <div
               className="
-                mt-7
+                mt-4
                 flex
                 items-center
                 justify-center
                 gap-2
-                sm:mt-9
-                lg:mt-10
+                sm:mt-5
+                lg:mt-6
               "
               aria-hidden="true"
             >
@@ -649,19 +625,19 @@ export function ProblemSection() {
               initial={false}
               animate={{
                 opacity: isLastPoint ? 1 : 0,
-                y: isLastPoint ? 0 : 12,
+                y: isLastPoint ? 0 : 8,
               }}
               transition={{
-                duration: reducedMotion ? 0 : 0.4,
+                duration: reducedMotion ? 0 : 0.35,
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
                 pointer-events-none
-                mt-8
+                mt-5
                 max-w-2xl
                 text-center
-                sm:mt-10
-                lg:mt-12
+                sm:mt-6
+                lg:mt-7
               "
               aria-hidden={!isLastPoint}
             >
@@ -681,7 +657,7 @@ export function ProblemSection() {
 
               <p
                 className="
-                  mt-2
+                  mt-1
                   font-display
                   text-lg
                   font-bold
@@ -694,17 +670,6 @@ export function ProblemSection() {
                 المشكلة أنها لا تعمل معًا.
               </p>
             </motion.div>
-
-            {/* Bottom spacing */}
-            <div
-              aria-hidden="true"
-              className="
-                h-8
-                w-full
-                sm:h-12
-                lg:h-16
-              "
-            />
           </div>
         </Container>
       </div>

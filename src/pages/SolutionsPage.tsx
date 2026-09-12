@@ -1,7 +1,8 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { services } from '@/data/services';
 import { Container } from '@/components/ui/Container';
@@ -10,660 +11,394 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export function SolutionsPage() {
   const reducedMotion = useReducedMotion();
+  const location = useLocation();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const activeService = services[activeIndex];
 
+  /*
+   * Handle deep links such as:
+   * /الحلول#ai-agent
+   * /الحلول#bookings-automation
+   * /الحلول#customer-service-automation
+   */
+  useEffect(() => {
+    const hash = location.hash.replace(/^#/, '');
+
+    if (!hash) return;
+
+    let targetIndex = -1;
+
+    try {
+      const decodedHash = decodeURIComponent(hash);
+
+      targetIndex = services.findIndex(
+        (service) => service.slug === decodedHash,
+      );
+    } catch {
+      return;
+    }
+
+    if (targetIndex === -1) return;
+
+    // Activate the requested solution
+    setActiveIndex(targetIndex);
+
+    // Wait until React renders the active solution
+    const firstFrame = window.requestAnimationFrame(() => {
+      const secondFrame = window.requestAnimationFrame(() => {
+        const target = document.getElementById('solutions-system');
+
+        if (!target) return;
+
+        const headerOffset = 88;
+
+        const targetTop =
+          target.getBoundingClientRect().top +
+          window.scrollY -
+          headerOffset;
+
+        window.scrollTo({
+          top: Math.max(0, targetTop),
+          left: 0,
+          behavior: reducedMotion ? 'auto' : 'smooth',
+        });
+      });
+
+      return () => window.cancelAnimationFrame(secondFrame);
+    });
+
+    return () => window.cancelAnimationFrame(firstFrame);
+  }, [location.hash, reducedMotion]);
+
   return (
     <>
-      {/* Intro */}
+      {/* INTRO */}
       <section
         dir="rtl"
-        className="
-          relative
-          overflow-hidden
-          border-b
-          border-base-line
-          bg-base
-          pt-24
-          pb-16
-          sm:pt-32
-          sm:pb-20
-          lg:pt-40
-          lg:pb-24
-        "
+        className="relative overflow-hidden border-b border-line bg-base py-24 md:py-32"
       >
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            left-1/2
-            top-1/2
-            h-[520px]
-            w-[520px]
-            -translate-x-1/2
-            -translate-y-1/2
-            rounded-full
-            bg-brass/[0.04]
-            blur-[140px]
-          "
-        />
-
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            inset-0
-            opacity-[0.025]
-            [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)]
-            [background-size:64px_64px]
-          "
-        />
-
-        <Container className="relative">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 flex items-center justify-center gap-3">
-              <span
-                aria-hidden="true"
-                className="h-px w-8 bg-brass/70"
-              />
-
-              <span
-                className="
-                  font-mono
-                  text-[10px]
-                  font-medium
-                  tracking-[0.22em]
-                  text-brass
-                "
-              >
-                SOLUTIONS
-              </span>
-
-              <span
-                aria-hidden="true"
-                className="h-px w-8 bg-brass/70"
-              />
-            </div>
-
-            <h1
-              className="
-                font-display
-                text-4xl
-                font-semibold
-                leading-[1.12]
-                tracking-tight
-                text-ink
-                sm:text-5xl
-                lg:text-6xl
-                xl:text-7xl
-              "
+        <Container>
+          <div className="max-w-4xl">
+            <motion.div
+              initial={
+                reducedMotion
+                  ? false
+                  : {
+                      opacity: 0,
+                      y: 24,
+                    }
+              }
+              animate={
+                reducedMotion
+                  ? undefined
+                  : {
+                      opacity: 1,
+                      y: 0,
+                    }
+              }
+              transition={{
+                duration: 0.7,
+                ease: [0.22, 1, 0.36, 1],
+              }}
             >
-              نبني الذكاء داخل عمليات منشأتك.
-            </h1>
+              <div className="mb-6 flex items-center gap-3">
+                <span className="h-px w-10 bg-brass" />
 
-            <p
-              className="
-                mx-auto
-                mt-7
-                max-w-2xl
-                text-sm
-                leading-8
-                text-ink-muted
-                sm:text-base
-                sm:leading-8
-                lg:text-lg
-              "
-            >
-              حلول أتمتة وذكاء اصطناعي تربط التواصل والأنظمة والبيانات
-              والعمليات في منظومة واحدة.
-            </p>
+                <span className="text-xs font-medium tracking-[0.25em] text-brass">
+                  الحلول
+                </span>
+              </div>
+
+              <h1 className="text-4xl font-bold leading-[1.15] tracking-tight text-white md:text-6xl">
+                أنظمة ذكية
+                <br />
+                <span className="text-brass">تعمل لأجلك</span>
+              </h1>
+
+              <p className="mt-8 max-w-2xl text-base leading-8 text-ink-muted md:text-lg">
+                نبني أنظمة أتمتة مدعومة بالذكاء الاصطناعي تساعد منشآت
+                الضيافة والسياحة على إدارة العملاء والحجوزات والمبيعات
+                والعمليات من مكان واحد.
+              </p>
+            </motion.div>
           </div>
         </Container>
       </section>
 
-      {/* Solutions System */}
+      {/* SOLUTIONS SYSTEM */}
       <section
+        id="solutions-system"
         dir="rtl"
-        className="
-          relative
-          overflow-hidden
-          border-b
-          border-base-line
-          py-20
-          sm:py-28
-          lg:py-32
-        "
+        className="relative overflow-hidden border-b border-line bg-raised py-20 md:py-28"
       >
-        <Container>
-          <div
-            className="
-              relative
-              overflow-hidden
-              border
-              border-base-line
-              bg-base
-            "
-          >
-            {/* Header */}
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-                border-b
-                border-base-line
-                px-5
-                py-4
-                sm:px-7
-                lg:px-8
-              "
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  className="h-1.5 w-1.5 rounded-full bg-brass"
-                />
+        {/* Ambient glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute right-1/2 top-1/2 h-[500px] w-[500px] -translate-y-1/2 translate-x-1/2 rounded-full bg-brass/5 blur-[120px]"
+        />
 
-                <span
-                  className="
-                    font-mono
-                    text-[10px]
-                    tracking-[0.16em]
-                    text-ink-faint
-                  "
-                >
-                  JITHR AI / SOLUTIONS
-                </span>
+        <Container>
+          <div className="relative">
+            {/* Section header */}
+            <div className="mb-12 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end">
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="h-px w-8 bg-brass" />
+
+                  <span className="text-xs font-medium tracking-[0.22em] text-brass">
+                    SYSTEMS
+                  </span>
+                </div>
+
+                <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
+                  منظومة الحلول
+                </h2>
               </div>
 
-              <span
-                className="
-                  font-mono
-                  text-[10px]
-                  tracking-[0.14em]
-                  text-ink-faint
-                "
-              >
-                {String(activeIndex + 1).padStart(2, '0')} /{' '}
-                {String(services.length).padStart(2, '0')}
-              </span>
+              <p className="max-w-md text-sm leading-7 text-ink-muted">
+                اختر الحل المناسب لاستكشاف كيفية بناء منظومة أتمتة
+                متكاملة لمنشأتك.
+              </p>
             </div>
 
-            <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
-              {/* Navigation */}
-              <div
-                className="
-                  border-b
-                  border-base-line
-                  lg:border-b-0
-                  lg:border-l
-                "
-              >
-                {services.map((service, index) => {
-                  const isActive = index === activeIndex;
+            <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
+              {/* SERVICES LIST */}
+              <div className="relative">
+                <div className="absolute right-0 top-0 hidden h-full w-px bg-line md:block" />
 
-                  return (
-                    <button
-                      key={service.slug}
-                      type="button"
-                      onMouseEnter={() => setActiveIndex(index)}
-                      onFocus={() => setActiveIndex(index)}
-                      onClick={() => setActiveIndex(index)}
-                      className="
-                        group
-                        relative
-                        flex
-                        w-full
-                        items-center
-                        gap-4
-                        border-b
-                        border-base-line
-                        px-5
-                        py-5
-                        text-right
-                        outline-none
-                        transition-colors
-                        duration-300
-                        last:border-b-0
-                        hover:bg-ink/[0.02]
-                        focus-visible:bg-ink/[0.03]
-                        sm:px-7
-                        sm:py-6
-                        lg:px-8
-                      "
-                    >
-                      {/* Active indicator */}
-                      <motion.span
-                        aria-hidden="true"
-                        className="
-                          absolute
-                          right-0
-                          top-0
-                          h-full
-                          w-px
-                          origin-center
-                          bg-brass
-                        "
-                        animate={{
-                          scaleY: isActive ? 1 : 0,
+                <div className="space-y-1">
+                  {services.map((service, index) => {
+                    const isActive = index === activeIndex;
+
+                    return (
+                      <button
+                        key={service.slug}
+                        type="button"
+                        onClick={() => {
+                          setActiveIndex(index);
+
+                          const nextHash = `#${service.slug}`;
+
+                          if (window.location.hash !== nextHash) {
+                            window.history.replaceState(
+                              null,
+                              '',
+                              `${window.location.pathname}${nextHash}`,
+                            );
+                          }
                         }}
-                        transition={{
-                          duration: reducedMotion ? 0 : 0.3,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                      />
-
-                      {/* Number */}
-                      <span
-                        className={`
-                          flex
-                          h-9
-                          w-9
-                          shrink-0
-                          items-center
-                          justify-center
-                          border
-                          font-mono
-                          text-[10px]
-                          tracking-[0.08em]
-                          transition-all
-                          duration-300
-                          sm:h-10
-                          sm:w-10
-                          ${
-                            isActive
-                              ? 'border-brass/60 bg-brass text-base'
-                              : 'border-base-line text-ink-faint group-hover:border-brass/40 group-hover:text-brass'
-                          }
-                        `}
+                        className={`group relative flex w-full items-center justify-between gap-4 border-b border-line px-5 py-5 text-right transition-colors duration-200 md:border-b-0 md:py-4 md:pr-8 ${
+                          isActive
+                            ? 'bg-white/[0.025]'
+                            : 'hover:bg-white/[0.015]'
+                        }`}
                       >
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
+                        {/* Active indicator */}
+                        <span
+                          className={`absolute right-0 top-0 hidden h-full w-[2px] transition-opacity duration-200 md:block ${
+                            isActive ? 'bg-brass opacity-100' : 'opacity-0'
+                          }`}
+                        />
 
-                      {/* Solution title */}
-                      <span
-                        className={`
-                          min-w-0
-                          flex-1
-                          font-display
-                          text-sm
-                          font-medium
-                          leading-7
-                          transition-colors
-                          duration-300
-                          sm:text-base
-                          ${
-                            isActive
-                              ? '!text-brass'
-                              : '!text-white'
-                          }
-                        `}
-                      >
-                        {service.title}
-                      </span>
+                        <div className="flex min-w-0 items-center gap-4">
+                          <span
+                            className={`font-mono text-[10px] tracking-[0.2em] transition-colors ${
+                              isActive
+                                ? 'text-brass'
+                                : 'text-ink-faint group-hover:text-ink-muted'
+                            }`}
+                          >
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
 
-                      {/* Arrow */}
-                      <span
-                        aria-hidden="true"
-                        className={`
-                          hidden
-                          text-base
-                          transition-all
-                          duration-300
-                          sm:block
-                          ${
+                          <span
+                            className={`truncate text-sm font-medium transition-colors md:text-base ${
+                              isActive
+                                ? '!text-brass'
+                                : '!text-white group-hover:text-brass'
+                            }`}
+                          >
+                            {service.title}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`shrink-0 text-xs transition-all duration-200 ${
                             isActive
-                              ? '-translate-x-1 text-brass opacity-100'
-                              : 'text-ink-faint opacity-0 group-hover:opacity-100'
-                          }
-                        `}
-                      >
-                        ←
-                      </span>
-                    </button>
-                  );
-                })}
+                              ? 'translate-x-0 text-brass opacity-100'
+                              : 'translate-x-2 text-ink-faint opacity-0 group-hover:translate-x-0 group-hover:opacity-100'
+                          }`}
+                        >
+                          ←
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Detail Panel */}
-              <div
-                className="
-                  relative
-                  flex
-                  min-h-[520px]
-                  flex-col
-                  justify-between
-                  overflow-hidden
-                  px-6
-                  py-8
-                  sm:min-h-[580px]
-                  sm:px-10
-                  sm:py-10
-                  lg:min-h-[680px]
-                  lg:px-14
-                  lg:py-14
-                "
-              >
-                {/* Technical grid */}
-                <div
-                  aria-hidden="true"
-                  className="
-                    pointer-events-none
-                    absolute
-                    inset-0
-                    opacity-[0.035]
-                    [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)]
-                    [background-size:48px_48px]
-                  "
-                />
-
-                {/* Ambient glow */}
-                <div
-                  aria-hidden="true"
-                  className="
-                    pointer-events-none
-                    absolute
-                    left-1/2
-                    top-1/2
-                    h-[380px]
-                    w-[380px]
-                    -translate-x-1/2
-                    -translate-y-1/2
-                    rounded-full
-                    bg-brass/[0.035]
-                    blur-[120px]
-                  "
-                />
-
-                {/* Large number */}
-                <motion.div
-                  key={`number-${activeIndex}`}
-                  initial={
-                    reducedMotion
-                      ? { opacity: 0 }
-                      : { opacity: 0, x: 30 }
-                  }
-                  animate={{
-                    opacity: 1,
-                    x: 0,
-                  }}
-                  transition={{
-                    duration: reducedMotion ? 0 : 0.45,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  aria-hidden="true"
-                  className="
-                    pointer-events-none
-                    absolute
-                    left-5
-                    top-0
-                    font-mono
-                    text-[170px]
-                    font-semibold
-                    leading-none
-                    tracking-[-0.08em]
-                    text-ink/[0.035]
-                    sm:left-8
-                    sm:text-[220px]
-                    lg:left-10
-                    lg:text-[280px]
-                  "
-                >
-                  {String(activeIndex + 1).padStart(2, '0')}
-                </motion.div>
-
+              {/* ACTIVE SERVICE DETAIL */}
+              <div className="relative min-h-[480px]">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeService.slug}
                     initial={
                       reducedMotion
-                        ? { opacity: 1 }
-                        : { opacity: 0, y: 16 }
+                        ? false
+                        : {
+                            opacity: 0,
+                            y: 12,
+                          }
                     }
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                    }}
+                    animate={
+                      reducedMotion
+                        ? undefined
+                        : {
+                            opacity: 1,
+                            y: 0,
+                          }
+                    }
                     exit={
                       reducedMotion
-                        ? { opacity: 1 }
-                        : { opacity: 0, y: -10 }
+                        ? undefined
+                        : {
+                            opacity: 0,
+                            y: -8,
+                          }
                     }
                     transition={{
-                      duration: reducedMotion ? 0 : 0.35,
+                      duration: reducedMotion ? 0 : 0.3,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className="relative z-10"
+                    className="relative h-full"
                   >
-                    {/* Label */}
-                    <div className="mb-8 flex items-center gap-3">
-                      <span
+                    <div className="relative overflow-hidden border border-line bg-base p-6 md:p-8 lg:p-10">
+                      {/* Technical grid */}
+                      <div
                         aria-hidden="true"
-                        className="h-px w-10 bg-brass"
+                        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+                        style={{
+                          backgroundImage:
+                            'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+                          backgroundSize: '32px 32px',
+                        }}
                       />
 
-                      <span
-                        className="
-                          font-mono
-                          text-[10px]
-                          tracking-[0.18em]
-                          text-brass
-                        "
-                      >
-                        SOLUTION{' '}
-                        {String(activeIndex + 1).padStart(2, '0')}
-                      </span>
-                    </div>
+                      {/* Corner markers */}
+                      <span className="absolute right-0 top-0 h-8 w-px bg-brass/60" />
+                      <span className="absolute right-0 top-0 h-px w-8 bg-brass/60" />
 
-                    {/* Title */}
-                    <h2
-                      className="
-                        max-w-2xl
-                        font-display
-                        text-4xl
-                        font-semibold
-                        leading-[1.12]
-                        tracking-tight
-                        text-ink
-                        sm:text-5xl
-                        lg:text-6xl
-                      "
-                    >
-                      {activeService.title}
-                    </h2>
+                      <span className="absolute bottom-0 left-0 h-8 w-px bg-brass/60" />
+                      <span className="absolute bottom-0 left-0 h-px w-8 bg-brass/60" />
 
-                    {/* Description */}
-                    <p
-                      className="
-                        mt-7
-                        max-w-2xl
-                        text-base
-                        leading-8
-                        text-ink-muted
-                        sm:text-lg
-                        sm:leading-9
-                      "
-                    >
-                      {activeService.summary}
-                    </p>
+                      <div className="relative">
+                        {/* Number */}
+                        <div className="mb-8 flex items-center justify-between">
+                          <span className="font-mono text-xs tracking-[0.2em] text-brass">
+                            {String(activeIndex + 1).padStart(2, '0')} /{' '}
+                            {String(services.length).padStart(2, '0')}
+                          </span>
 
-                    {/* Capabilities */}
-                    {activeService.points.length > 0 && (
-                      <div className="mt-10 max-w-2xl">
-                        <div
-                          className="
-                            mb-5
-                            flex
-                            items-center
-                            gap-3
-                          "
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="h-px w-6 bg-base-line"
-                          />
+                          <span className="h-px flex-1 bg-line mx-4" />
 
-                          <span
-                            className="
-                              text-[10px]
-                              font-medium
-                              tracking-[0.16em]
-                              text-ink-faint
-                            "
-                          >
-                            نطاق الحل
+                          <span className="font-mono text-[10px] tracking-[0.16em] text-ink-faint">
+                            SYSTEM
                           </span>
                         </div>
 
-                        <ul className="grid gap-0 border-t border-base-line sm:grid-cols-2">
-                          {activeService.points.map(
-                            (point, pointIndex) => (
-                              <li
-                                key={point}
-                                className="
-                                  flex
-                                  min-h-14
-                                  items-center
-                                  gap-3
-                                  border-b
-                                  border-base-line
-                                  py-3
-                                  text-sm
-                                  leading-7
-                                  text-ink-muted
-                                  sm:px-4
-                                  sm:odd:border-l
-                                  sm:odd:pl-0
-                                  sm:even:pr-4
-                                "
-                              >
-                                <span
-                                  aria-hidden="true"
-                                  className="
-                                    h-1
-                                    w-1
-                                    shrink-0
-                                    rounded-full
-                                    bg-brass
-                                  "
-                                />
+                        {/* Title */}
+                        <h3 className="text-3xl font-bold leading-tight text-white md:text-4xl">
+                          {activeService.title}
+                        </h3>
 
-                                <span>
-                                  {point}
-                                </span>
+                        {/* Description */}
+                        <p className="mt-6 max-w-2xl text-sm leading-8 text-ink-muted md:text-base">
+                          {activeService.description}
+                        </p>
 
-                                <span
-                                  aria-hidden="true"
-                                  className="
-                                    mr-auto
-                                    font-mono
-                                    text-[9px]
-                                    text-ink-faint
-                                  "
-                                >
-                                  {String(pointIndex + 1).padStart(
-                                    2,
-                                    '0',
-                                  )}
+                        {/* Details */}
+                        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+                          {activeService.features?.map((feature, index) => (
+                            <div
+                              key={`${activeService.slug}-${index}`}
+                              className="border border-line bg-white/[0.015] p-4"
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className="mt-1 h-1.5 w-1.5 shrink-0 bg-brass" />
+
+                                <span className="text-sm leading-7 text-ink-muted">
+                                  {feature}
                                 </span>
-                              </li>
-                            ),
-                          )}
-                        </ul>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Progress */}
+                        <div className="mt-10">
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="font-mono text-[10px] tracking-[0.16em] text-ink-faint">
+                              SOLUTION
+                            </span>
+
+                            <span className="font-mono text-[10px] text-brass">
+                              {Math.round(
+                                ((activeIndex + 1) / services.length) * 100,
+                              )}
+                              %
+                            </span>
+                          </div>
+
+                          <div className="h-px w-full bg-line">
+                            <motion.div
+                              initial={
+                                reducedMotion
+                                  ? undefined
+                                  : {
+                                      width: 0,
+                                    }
+                              }
+                              animate={{
+                                width: `${
+                                  ((activeIndex + 1) / services.length) * 100
+                                }%`,
+                              }}
+                              transition={{
+                                duration: reducedMotion ? 0 : 0.4,
+                                ease: [0.22, 1, 0.36, 1],
+                              }}
+                              className="h-px bg-brass"
+                            />
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </motion.div>
                 </AnimatePresence>
-
-                {/* Bottom progress */}
-                <div className="relative z-10 mt-12">
-                  <div className="mb-4 flex items-center justify-between">
-                    <span
-                      className="
-                        text-[10px]
-                        font-medium
-                        tracking-[0.12em]
-                        text-ink-faint
-                      "
-                    >
-                      منظومة الحلول
-                    </span>
-
-                    <span
-                      className="
-                        font-mono
-                        text-[10px]
-                        tracking-[0.12em]
-                        text-ink-faint
-                      "
-                    >
-                      {Math.round(
-                        ((activeIndex + 1) / services.length) * 100,
-                      )}
-                      %
-                    </span>
-                  </div>
-
-                  <div className="h-px w-full bg-base-line">
-                    <motion.div
-                      className="h-px bg-brass"
-                      animate={{
-                        width: `${
-                          ((activeIndex + 1) /
-                            services.length) *
-                          100
-                        }%`,
-                      }}
-                      transition={{
-                        duration: reducedMotion ? 0 : 0.45,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                    />
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-9 gap-1.5">
-                    {services.map((service, index) => (
-                      <button
-                        key={`marker-${service.slug}`}
-                        type="button"
-                        aria-label={`الانتقال إلى الحل ${index + 1}`}
-                        onMouseEnter={() => setActiveIndex(index)}
-                        onFocus={() => setActiveIndex(index)}
-                        onClick={() => setActiveIndex(index)}
-                        className="
-                          group
-                          flex
-                          justify-center
-                          py-2
-                        "
-                      >
-                        <span
-                          className={`
-                            h-1
-                            w-full
-                            transition-all
-                            duration-300
-                            ${
-                              index <= activeIndex
-                                ? 'bg-brass'
-                                : 'bg-base-line group-hover:bg-brass/40'
-                            }
-                          `}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
+            </div>
+
+            {/* Mobile indicators */}
+            <div className="mt-8 flex items-center justify-center gap-2 lg:hidden">
+              {services.map((service, index) => (
+                <button
+                  key={service.slug}
+                  type="button"
+                  aria-label={`الانتقال إلى ${service.title}`}
+                  onClick={() => setActiveIndex(index)}
+                  className={`h-1 transition-all duration-200 ${
+                    index === activeIndex
+                      ? 'w-8 bg-brass'
+                      : 'w-2 bg-line'
+                  }`}
+                />
+              ))}
             </div>
           </div>
         </Container>
       </section>
 
-      {/* Final CTA */}
       <FinalCTA />
     </>
   );

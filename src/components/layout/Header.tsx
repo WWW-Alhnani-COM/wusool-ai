@@ -145,17 +145,17 @@ export function Header() {
     جِذع
   </span>
 
- <span
+<span
   className="
     -ml-1.5
     font-english
     text-sm
     font-semibold
     tracking-[0.08em]
-    text-[#C89B5C]
     sm:text-base
   "
   dir="ltr"
+  style={{ color: "#C89B5C" }}
 >
     AI
   </span>

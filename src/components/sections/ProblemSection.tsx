@@ -19,16 +19,6 @@ export function ProblemSection() {
 
   const [activeIndex, setActiveIndex] = useState(0);
 
-  /*
-   * Interactive technical grid state
-   */
-  const mouseX = useRef(50);
-  const mouseY = useRef(50);
-  const gridX = useRef(0);
-  const gridY = useRef(0);
-
-  const gridRef = useRef<HTMLDivElement>(null);
-
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end end'],
@@ -45,75 +35,7 @@ export function ProblemSection() {
     setActiveIndex((current) =>
       current === index ? current : index,
     );
-
-    /*
-     * Move the technical grid with scroll.
-     *
-     * The movement is intentionally subtle so the grid
-     * feels like a physical technical surface rather than
-     * a normal background animation.
-     */
-    if (!reducedMotion && gridRef.current) {
-      const scrollX = latest * 70;
-      const scrollY = latest * 140;
-
-      gridX.current = scrollX;
-      gridY.current = scrollY;
-
-      gridRef.current.style.transform = `
-        translate3d(
-          ${scrollX}px,
-          ${scrollY}px,
-          0
-        )
-      `;
-    }
   });
-
-  const handlePointerMove = (
-    event: React.PointerEvent<HTMLElement>,
-  ) => {
-    if (reducedMotion || !sectionRef.current) {
-      return;
-    }
-
-    const rect = sectionRef.current.getBoundingClientRect();
-
-    const x =
-      ((event.clientX - rect.left) / rect.width) * 100;
-
-    const y =
-      ((event.clientY - rect.top) / rect.height) * 100;
-
-    mouseX.current = Math.max(0, Math.min(100, x));
-    mouseY.current = Math.max(0, Math.min(100, y));
-
-    sectionRef.current.style.setProperty(
-      '--pointer-x',
-      `${mouseX.current}%`,
-    );
-
-    sectionRef.current.style.setProperty(
-      '--pointer-y',
-      `${mouseY.current}%`,
-    );
-  };
-
-  const handlePointerLeave = () => {
-    if (reducedMotion || !sectionRef.current) {
-      return;
-    }
-
-    sectionRef.current.style.setProperty(
-      '--pointer-x',
-      '50%',
-    );
-
-    sectionRef.current.style.setProperty(
-      '--pointer-y',
-      '50%',
-    );
-  };
 
   const currentPoint = problemContent.points[activeIndex];
 
@@ -124,249 +46,14 @@ export function ProblemSection() {
     <section
       ref={sectionRef}
       dir="rtl"
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
-      style={
-        {
-          '--pointer-x': '50%',
-          '--pointer-y': '50%',
-        } as React.CSSProperties
-      }
       className="
         relative
         z-20
         isolate
         h-[300vh]
-        overflow-hidden
         bg-base
       "
     >
-      {/* =====================================================
-          INTERACTIVE TECHNICAL BACKGROUND
-          ===================================================== */}
-
-      <div
-        aria-hidden="true"
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-0
-          overflow-hidden
-        "
-      >
-        {/* Base technical grid */}
-        <div
-          ref={gridRef}
-          className="
-            absolute
-            -inset-[120px]
-            will-change-transform
-            opacity-[0.18]
-          "
-          style={{
-            backgroundImage: `
-              linear-gradient(
-                to right,
-                rgba(200,155,92,0.13) 1px,
-                transparent 1px
-              ),
-              linear-gradient(
-                to bottom,
-                rgba(200,155,92,0.13) 1px,
-                transparent 1px
-              )
-            `,
-            backgroundSize: '64px 64px',
-          }}
-        />
-
-        {/* Fine secondary grid */}
-        <div
-          className="
-            absolute
-            -inset-[120px]
-            opacity-[0.09]
-          "
-          style={{
-            backgroundImage: `
-              linear-gradient(
-                to right,
-                rgba(255,255,255,0.08) 1px,
-                transparent 1px
-              ),
-              linear-gradient(
-                to bottom,
-                rgba(255,255,255,0.08) 1px,
-                transparent 1px
-              )
-            `,
-            backgroundSize: '16px 16px',
-          }}
-        />
-
-        {/* Cursor-following technical glow */}
-        <div
-          className="
-            absolute
-            h-[420px]
-            w-[420px]
-            -translate-x-1/2
-            -translate-y-1/2
-            rounded-full
-            bg-brass/[0.055]
-            blur-[110px]
-            transition-[left,top]
-            duration-300
-            ease-out
-          "
-          style={{
-            left: 'var(--pointer-x)',
-            top: 'var(--pointer-y)',
-          }}
-        />
-
-        {/* Cursor-following sharp radial grid highlight */}
-        <div
-          className="
-            absolute
-            inset-0
-            opacity-80
-          "
-          style={{
-            background: `
-              radial-gradient(
-                360px circle at var(--pointer-x) var(--pointer-y),
-                rgba(200,155,92,0.10),
-                rgba(200,155,92,0.035) 35%,
-                transparent 70%
-              )
-            `,
-          }}
-        />
-
-        {/* Center atmospheric glow */}
-        <div
-          className="
-            absolute
-            left-1/2
-            top-1/2
-            h-[500px]
-            w-[500px]
-            -translate-x-1/2
-            -translate-y-1/2
-            rounded-full
-            bg-brass/[0.025]
-            blur-[130px]
-          "
-        />
-
-        {/* Technical center point */}
-        <div
-          className="
-            absolute
-            left-1/2
-            top-1/2
-            h-2
-            w-2
-            -translate-x-1/2
-            -translate-y-1/2
-            rounded-full
-            bg-brass/30
-            shadow-[0_0_30px_rgba(200,155,92,0.35)]
-          "
-        />
-
-        {/* Horizontal technical scan line */}
-        <motion.div
-          aria-hidden="true"
-          className="
-            absolute
-            left-0
-            right-0
-            h-px
-            bg-gradient-to-r
-            from-transparent
-            via-brass/15
-            to-transparent
-          "
-          animate={
-            reducedMotion
-              ? {
-                  top: '50%',
-                }
-              : {
-                  top: ['20%', '80%', '20%'],
-                }
-          }
-          transition={
-            reducedMotion
-              ? {
-                  duration: 0,
-                }
-              : {
-                  duration: 12,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }
-          }
-        />
-
-        {/* Vertical technical scan line */}
-        <motion.div
-          aria-hidden="true"
-          className="
-            absolute
-            bottom-0
-            top-0
-            w-px
-            bg-gradient-to-b
-            from-transparent
-            via-brass/10
-            to-transparent
-          "
-          animate={
-            reducedMotion
-              ? {
-                  left: '50%',
-                }
-              : {
-                  left: ['20%', '80%', '20%'],
-                }
-          }
-          transition={
-            reducedMotion
-              ? {
-                  duration: 0,
-                }
-              : {
-                  duration: 16,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }
-          }
-        />
-      </div>
-
-      {/* =====================================================
-          EDGE VIGNETTE
-          ===================================================== */}
-
-      <div
-        aria-hidden="true"
-        className="
-          pointer-events-none
-          absolute
-          inset-0
-          z-[1]
-          bg-[radial-gradient(circle_at_center,transparent_25%,rgba(5,5,5,0.55)_100%)]
-        "
-      />
-
-      {/* =====================================================
-          STICKY CONTENT
-          ===================================================== */}
-
       <div
         className="
           sticky
@@ -383,25 +70,22 @@ export function ProblemSection() {
         "
       >
         <Container
-          className="
-            relative
-            z-30
-            flex
-            w-full
-            max-w-4xl
-            translate-y-8
-            flex-col
-            items-center
-            justify-center
-            text-center
-            sm:translate-y-10
-            lg:translate-y-12
-          "
+className="
+  relative
+  z-30
+  flex
+  w-full
+  max-w-4xl
+  translate-y-8
+  flex-col
+  items-center
+  justify-center
+  text-center
+  sm:translate-y-10
+  lg:translate-y-12
+"
         >
-          {/* =================================================
-              MAIN ATMOSPHERE
-              ================================================= */}
-
+          {/* Background atmosphere */}
           <div
             aria-hidden="true"
             className="
@@ -423,10 +107,7 @@ export function ProblemSection() {
             "
           />
 
-          {/* =================================================
-              MAIN CONTENT
-              ================================================= */}
-
+          {/* Main content */}
           <div
             className="
               relative
@@ -507,10 +188,7 @@ export function ProblemSection() {
               </h2>
             </motion.div>
 
-            {/* =================================================
-                PROBLEM STORY
-                ================================================= */}
-
+            {/* Problem story */}
             <div
               className="
                 relative
@@ -612,10 +290,7 @@ export function ProblemSection() {
               </AnimatePresence>
             </div>
 
-            {/* =================================================
-                PROGRESS
-                ================================================= */}
-
+            {/* Progress */}
             <div
               className="
                 mt-7
@@ -650,10 +325,7 @@ export function ProblemSection() {
               })}
             </div>
 
-            {/* =================================================
-                FINAL MESSAGE
-                ================================================= */}
-
+            {/* Final message */}
             <motion.div
               initial={false}
               animate={{

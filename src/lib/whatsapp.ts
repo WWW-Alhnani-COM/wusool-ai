@@ -10,5 +10,5 @@ export function getWhatsAppLink(message?: string): string | null {
   const number = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
   if (!number) return null;
   const text = message ? `?text=${encodeURIComponent(message)}` : "";
-  return `https://wa.me/${number}${text}`;
+  return `https://wa.me/+966552173887`;
 }

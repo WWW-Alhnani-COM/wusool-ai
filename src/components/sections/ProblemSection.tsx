@@ -6,12 +6,7 @@ import {
   useMotionValueEvent,
   useScroll,
 } from 'framer-motion';
-import {
-  useRef,
-  useState,
-  type CSSProperties,
-  type PointerEvent,
-} from 'react';
+import { useRef, useState } from 'react';
 
 import { problemContent } from '@/data/content';
 import { Container } from '@/components/ui/Container';
@@ -21,11 +16,18 @@ export function ProblemSection() {
   const reducedMotion = useReducedMotion();
 
   const sectionRef = useRef<HTMLElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const scanLineRef = useRef<HTMLDivElement>(null);
-  const scanLineVerticalRef = useRef<HTMLDivElement>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
+
+  /*
+   * Interactive technical grid state
+   */
+  const mouseX = useRef(50);
+  const mouseY = useRef(50);
+  const gridX = useRef(0);
+  const gridY = useRef(0);
+
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -44,34 +46,32 @@ export function ProblemSection() {
       current === index ? current : index,
     );
 
-    if (reducedMotion) {
-      return;
-    }
+    /*
+     * Move the technical grid with scroll.
+     *
+     * The movement is intentionally subtle so the grid
+     * feels like a physical technical surface rather than
+     * a normal background animation.
+     */
+    if (!reducedMotion && gridRef.current) {
+      const scrollX = latest * 70;
+      const scrollY = latest * 140;
 
-    const progress = Math.max(0, Math.min(1, latest));
+      gridX.current = scrollX;
+      gridY.current = scrollY;
 
-    const translateX = progress * -180;
-    const translateY = progress * -320;
-    const rotate = progress * 1.5;
-
-    if (gridRef.current) {
-      gridRef.current.style.transform =
-        `translate3d(${translateX}px, ${translateY}px, 0) rotate(${rotate}deg)`;
-    }
-
-    if (scanLineRef.current) {
-      scanLineRef.current.style.transform =
-        `translate3d(0, ${progress * 100}vh, 0)`;
-    }
-
-    if (scanLineVerticalRef.current) {
-      scanLineVerticalRef.current.style.transform =
-        `translate3d(${progress * 100}vw, 0, 0)`;
+      gridRef.current.style.transform = `
+        translate3d(
+          ${scrollX}px,
+          ${scrollY}px,
+          0
+        )
+      `;
     }
   });
 
   const handlePointerMove = (
-    event: PointerEvent<HTMLElement>,
+    event: React.PointerEvent<HTMLElement>,
   ) => {
     if (reducedMotion || !sectionRef.current) {
       return;
@@ -79,22 +79,28 @@ export function ProblemSection() {
 
     const rect = sectionRef.current.getBoundingClientRect();
 
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    const x =
+      ((event.clientX - rect.left) / rect.width) * 100;
+
+    const y =
+      ((event.clientY - rect.top) / rect.height) * 100;
+
+    mouseX.current = Math.max(0, Math.min(100, x));
+    mouseY.current = Math.max(0, Math.min(100, y));
 
     sectionRef.current.style.setProperty(
       '--pointer-x',
-      `${Math.max(0, Math.min(100, x))}%`,
+      `${mouseX.current}%`,
     );
 
     sectionRef.current.style.setProperty(
       '--pointer-y',
-      `${Math.max(0, Math.min(100, y))}%`,
+      `${mouseY.current}%`,
     );
   };
 
   const handlePointerLeave = () => {
-    if (!sectionRef.current) {
+    if (reducedMotion || !sectionRef.current) {
       return;
     }
 
@@ -124,7 +130,7 @@ export function ProblemSection() {
         {
           '--pointer-x': '50%',
           '--pointer-y': '50%',
-        } as CSSProperties
+        } as React.CSSProperties
       }
       className="
         relative
@@ -136,7 +142,7 @@ export function ProblemSection() {
       "
     >
       {/* =====================================================
-          TECHNICAL GRID
+          INTERACTIVE TECHNICAL BACKGROUND
           ===================================================== */}
 
       <div
@@ -149,205 +155,213 @@ export function ProblemSection() {
           overflow-hidden
         "
       >
-        {/* Main grid */}
+        {/* Base technical grid */}
         <div
           ref={gridRef}
           className="
             absolute
-            -inset-[20%]
+            -inset-[120px]
             will-change-transform
+            opacity-[0.18]
           "
           style={{
             backgroundImage: `
               linear-gradient(
                 to right,
-                rgba(200, 155, 92, 0.22) 1px,
+                rgba(200,155,92,0.13) 1px,
                 transparent 1px
               ),
               linear-gradient(
                 to bottom,
-                rgba(200, 155, 92, 0.22) 1px,
+                rgba(200,155,92,0.13) 1px,
                 transparent 1px
-              ),
+              )
+            `,
+            backgroundSize: '64px 64px',
+          }}
+        />
+
+        {/* Fine secondary grid */}
+        <div
+          className="
+            absolute
+            -inset-[120px]
+            opacity-[0.09]
+          "
+          style={{
+            backgroundImage: `
               linear-gradient(
                 to right,
-                rgba(255, 255, 255, 0.055) 1px,
+                rgba(255,255,255,0.08) 1px,
                 transparent 1px
               ),
               linear-gradient(
                 to bottom,
-                rgba(255, 255, 255, 0.055) 1px,
+                rgba(255,255,255,0.08) 1px,
                 transparent 1px
               )
             `,
-            backgroundSize:
-              '64px 64px, 64px 64px, 16px 16px, 16px 16px',
-            transform:
-              'translate3d(0, 0, 0) rotate(0deg)',
+            backgroundSize: '16px 16px',
           }}
         />
 
-        {/* Pointer glow */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(
-                380px circle at var(--pointer-x) var(--pointer-y),
-                rgba(200, 155, 92, 0.15),
-                rgba(200, 155, 92, 0.05) 32%,
-                transparent 68%
-              )
-            `,
-          }}
-        />
-
-        {/* Secondary pointer light */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(
-                800px circle at var(--pointer-x) var(--pointer-y),
-                rgba(255, 255, 255, 0.035),
-                transparent 58%
-              )
-            `,
-          }}
-        />
-
-        {/* Horizontal scan */}
-        <div
-          ref={scanLineRef}
-          className="
-            absolute
-            left-0
-            top-[-100vh]
-            h-px
-            w-full
-            bg-gradient-to-r
-            from-transparent
-            via-brass/45
-            to-transparent
-            opacity-60
-            will-change-transform
-          "
-        />
-
-        {/* Vertical scan */}
-        <div
-          ref={scanLineVerticalRef}
-          className="
-            absolute
-            left-[-100vw]
-            top-0
-            h-full
-            w-px
-            bg-gradient-to-b
-            from-transparent
-            via-brass/35
-            to-transparent
-            opacity-50
-            will-change-transform
-          "
-        />
-
-        {/* Center vertical axis */}
+        {/* Cursor-following technical glow */}
         <div
           className="
             absolute
-            left-1/2
-            top-0
-            h-full
-            w-px
-            -translate-x-1/2
-            bg-brass/[0.07]
-          "
-        />
-
-        {/* Center horizontal axis */}
-        <div
-          className="
-            absolute
-            left-0
-            top-1/2
-            h-px
-            w-full
-            -translate-y-1/2
-            bg-brass/[0.07]
-          "
-        />
-
-        {/* Center node */}
-        <div
-          className="
-            absolute
-            left-1/2
-            top-1/2
-            h-3
-            w-3
+            h-[420px]
+            w-[420px]
             -translate-x-1/2
             -translate-y-1/2
             rounded-full
-            border
-            border-brass/50
-            bg-base
-            shadow-[0_0_28px_rgba(200,155,92,0.25)]
+            bg-brass/[0.055]
+            blur-[110px]
+            transition-[left,top]
+            duration-300
+            ease-out
           "
+          style={{
+            left: 'var(--pointer-x)',
+            top: 'var(--pointer-y)',
+          }}
         />
 
-        <div
-          className="
-            absolute
-            left-1/2
-            top-1/2
-            h-12
-            w-12
-            -translate-x-1/2
-            -translate-y-1/2
-            rounded-full
-            border
-            border-brass/[0.14]
-          "
-        />
-
-        {/* Center fade */}
+        {/* Cursor-following sharp radial grid highlight */}
         <div
           className="
             absolute
             inset-0
-            bg-[radial-gradient(circle_at_center,transparent_15%,#050505_88%)]
+            opacity-80
           "
+          style={{
+            background: `
+              radial-gradient(
+                360px circle at var(--pointer-x) var(--pointer-y),
+                rgba(200,155,92,0.10),
+                rgba(200,155,92,0.035) 35%,
+                transparent 70%
+              )
+            `,
+          }}
         />
 
-        {/* Top fade */}
+        {/* Center atmospheric glow */}
         <div
           className="
             absolute
-            inset-x-0
-            top-0
-            h-28
-            bg-gradient-to-b
-            from-base
+            left-1/2
+            top-1/2
+            h-[500px]
+            w-[500px]
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+            bg-brass/[0.025]
+            blur-[130px]
+          "
+        />
+
+        {/* Technical center point */}
+        <div
+          className="
+            absolute
+            left-1/2
+            top-1/2
+            h-2
+            w-2
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+            bg-brass/30
+            shadow-[0_0_30px_rgba(200,155,92,0.35)]
+          "
+        />
+
+        {/* Horizontal technical scan line */}
+        <motion.div
+          aria-hidden="true"
+          className="
+            absolute
+            left-0
+            right-0
+            h-px
+            bg-gradient-to-r
+            from-transparent
+            via-brass/15
             to-transparent
-            sm:h-32
           "
+          animate={
+            reducedMotion
+              ? {
+                  top: '50%',
+                }
+              : {
+                  top: ['20%', '80%', '20%'],
+                }
+          }
+          transition={
+            reducedMotion
+              ? {
+                  duration: 0,
+                }
+              : {
+                  duration: 12,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }
+          }
         />
 
-        {/* Bottom fade */}
-        <div
+        {/* Vertical technical scan line */}
+        <motion.div
+          aria-hidden="true"
           className="
             absolute
-            inset-x-0
             bottom-0
-            h-28
-            bg-gradient-to-t
-            from-base
+            top-0
+            w-px
+            bg-gradient-to-b
+            from-transparent
+            via-brass/10
             to-transparent
-            sm:h-32
           "
+          animate={
+            reducedMotion
+              ? {
+                  left: '50%',
+                }
+              : {
+                  left: ['20%', '80%', '20%'],
+                }
+          }
+          transition={
+            reducedMotion
+              ? {
+                  duration: 0,
+                }
+              : {
+                  duration: 16,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }
+          }
         />
       </div>
+
+      {/* =====================================================
+          EDGE VIGNETTE
+          ===================================================== */}
+
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          z-[1]
+          bg-[radial-gradient(circle_at_center,transparent_25%,rgba(5,5,5,0.55)_100%)]
+        "
+      />
 
       {/* =====================================================
           STICKY CONTENT
@@ -375,13 +389,19 @@ export function ProblemSection() {
             flex
             w-full
             max-w-4xl
+            translate-y-8
             flex-col
             items-center
             justify-center
             text-center
+            sm:translate-y-10
+            lg:translate-y-12
           "
         >
-          {/* Background atmosphere */}
+          {/* =================================================
+              MAIN ATMOSPHERE
+              ================================================= */}
+
           <div
             aria-hidden="true"
             className="
@@ -389,19 +409,23 @@ export function ProblemSection() {
               absolute
               left-1/2
               top-1/2
-              h-[220px]
-              w-[220px]
+              h-[240px]
+              w-[240px]
               -translate-x-1/2
               -translate-y-1/2
               rounded-full
               bg-brass/5
-              blur-[80px]
-              sm:h-[300px]
-              sm:w-[300px]
-              lg:h-[360px]
-              lg:w-[360px]
+              blur-[90px]
+              sm:h-[340px]
+              sm:w-[340px]
+              lg:h-[420px]
+              lg:w-[420px]
             "
           />
+
+          {/* =================================================
+              MAIN CONTENT
+              ================================================= */}
 
           <div
             className="
@@ -416,7 +440,7 @@ export function ProblemSection() {
               text-center
             "
           >
-            {/* Heading */}
+            {/* Section heading */}
             <motion.div
               initial={
                 reducedMotion
@@ -426,7 +450,7 @@ export function ProblemSection() {
                     }
                   : {
                       opacity: 0,
-                      y: 24,
+                      y: 30,
                     }
               }
               whileInView={{
@@ -438,25 +462,28 @@ export function ProblemSection() {
                 amount: 0.2,
               }}
               transition={{
-                duration: reducedMotion ? 0 : 0.7,
+                duration: reducedMotion ? 0 : 0.8,
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
+                mb-5
                 w-full
                 max-w-3xl
                 px-4
+                sm:mb-7
+                lg:mb-8
               "
             >
               <span
                 className="
-                  mb-2
+                  mb-3
                   block
                   text-[10px]
                   font-medium
                   uppercase
                   tracking-[0.25em]
                   text-brass
-                  sm:mb-3
+                  sm:mb-4
                   sm:text-xs
                 "
               >
@@ -480,23 +507,23 @@ export function ProblemSection() {
               </h2>
             </motion.div>
 
-            {/* Problem story */}
+            {/* =================================================
+                PROBLEM STORY
+                ================================================= */}
+
             <div
               className="
                 relative
-                mt-4
                 flex
-                min-h-[90px]
+                min-h-[100px]
                 w-full
                 items-center
                 justify-center
                 px-5
-                sm:mt-5
-                sm:min-h-[110px]
+                sm:min-h-[120px]
                 sm:px-8
-                md:min-h-[130px]
-                lg:mt-6
-                lg:min-h-[150px]
+                md:min-h-[145px]
+                lg:min-h-[170px]
               "
             >
               <AnimatePresence
@@ -513,9 +540,9 @@ export function ProblemSection() {
                         }
                       : {
                           opacity: 0,
-                          y: 25,
-                          filter: 'blur(8px)',
-                          scale: 0.98,
+                          y: 35,
+                          filter: 'blur(10px)',
+                          scale: 0.97,
                         }
                   }
                   animate={{
@@ -531,13 +558,13 @@ export function ProblemSection() {
                         }
                       : {
                           opacity: 0,
-                          y: -20,
-                          filter: 'blur(6px)',
-                          scale: 1.01,
+                          y: -25,
+                          filter: 'blur(8px)',
+                          scale: 1.02,
                         }
                   }
                   transition={{
-                    duration: reducedMotion ? 0 : 0.45,
+                    duration: reducedMotion ? 0 : 0.5,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className="
@@ -551,13 +578,13 @@ export function ProblemSection() {
                 >
                   <span
                     className="
-                      mb-2
+                      mb-3
                       text-[10px]
                       font-medium
                       uppercase
                       tracking-[0.22em]
                       text-brass/80
-                      sm:mb-3
+                      sm:mb-4
                       sm:text-xs
                     "
                   >
@@ -585,16 +612,19 @@ export function ProblemSection() {
               </AnimatePresence>
             </div>
 
-            {/* Progress */}
+            {/* =================================================
+                PROGRESS
+                ================================================= */}
+
             <div
               className="
-                mt-4
+                mt-7
                 flex
                 items-center
                 justify-center
                 gap-2
-                sm:mt-5
-                lg:mt-6
+                sm:mt-9
+                lg:mt-10
               "
               aria-hidden="true"
             >
@@ -620,24 +650,27 @@ export function ProblemSection() {
               })}
             </div>
 
-            {/* Final message */}
+            {/* =================================================
+                FINAL MESSAGE
+                ================================================= */}
+
             <motion.div
               initial={false}
               animate={{
                 opacity: isLastPoint ? 1 : 0,
-                y: isLastPoint ? 0 : 8,
+                y: isLastPoint ? 0 : 12,
               }}
               transition={{
-                duration: reducedMotion ? 0 : 0.35,
+                duration: reducedMotion ? 0 : 0.4,
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
                 pointer-events-none
-                mt-5
+                mt-8
                 max-w-2xl
                 text-center
-                sm:mt-6
-                lg:mt-7
+                sm:mt-10
+                lg:mt-12
               "
               aria-hidden={!isLastPoint}
             >
@@ -657,7 +690,7 @@ export function ProblemSection() {
 
               <p
                 className="
-                  mt-1
+                  mt-2
                   font-display
                   text-lg
                   font-bold
@@ -670,10 +703,20 @@ export function ProblemSection() {
                 المشكلة أنها لا تعمل معًا.
               </p>
             </motion.div>
+
+            {/* Bottom spacing */}
+            <div
+              aria-hidden="true"
+              className="
+                h-8
+                w-full
+                sm:h-12
+                lg:h-16
+              "
+            />
           </div>
         </Container>
       </div>
     </section>
   );
 }
-

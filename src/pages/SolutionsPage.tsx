@@ -282,7 +282,7 @@ export function SolutionsPage() {
                         {String(index + 1).padStart(2, '0')}
                       </span>
 
-                      {/* Solution title — WHITE */}
+                      {/* Solution title — ALWAYS WHITE */}
                       <span
                         className="
                           min-w-0
@@ -291,7 +291,7 @@ export function SolutionsPage() {
                           text-sm
                           font-medium
                           leading-7
-                          text-ink
+                          !text-white
                           transition-colors
                           duration-300
                           sm:text-base
@@ -514,54 +514,59 @@ export function SolutionsPage() {
                         </div>
 
                         <ul className="grid gap-0 border-t border-base-line sm:grid-cols-2">
-                          {activeService.points.map((point, pointIndex) => (
-                            <li
-                              key={point}
-                              className="
-                                flex
-                                min-h-14
-                                items-center
-                                gap-3
-                                border-b
-                                border-base-line
-                                py-3
-                                text-sm
-                                leading-7
-                                text-ink-muted
-                                sm:px-4
-                                sm:odd:border-l
-                                sm:odd:pl-0
-                                sm:even:pr-4
-                              "
-                            >
-                              <span
-                                aria-hidden="true"
+                          {activeService.points.map(
+                            (point, pointIndex) => (
+                              <li
+                                key={point}
                                 className="
-                                  h-1
-                                  w-1
-                                  shrink-0
-                                  rounded-full
-                                  bg-brass
-                                "
-                              />
-
-                              <span>
-                                {point}
-                              </span>
-
-                              <span
-                                aria-hidden="true"
-                                className="
-                                  mr-auto
-                                  font-mono
-                                  text-[9px]
-                                  text-ink-faint
+                                  flex
+                                  min-h-14
+                                  items-center
+                                  gap-3
+                                  border-b
+                                  border-base-line
+                                  py-3
+                                  text-sm
+                                  leading-7
+                                  text-ink-muted
+                                  sm:px-4
+                                  sm:odd:border-l
+                                  sm:odd:pl-0
+                                  sm:even:pr-4
                                 "
                               >
-                                {String(pointIndex + 1).padStart(2, '0')}
-                              </span>
-                            </li>
-                          ))}
+                                <span
+                                  aria-hidden="true"
+                                  className="
+                                    h-1
+                                    w-1
+                                    shrink-0
+                                    rounded-full
+                                    bg-brass
+                                  "
+                                />
+
+                                <span>
+                                  {point}
+                                </span>
+
+                                <span
+                                  aria-hidden="true"
+                                  className="
+                                    mr-auto
+                                    font-mono
+                                    text-[9px]
+                                    text-ink-faint
+                                  "
+                                >
+                                  {String(pointIndex + 1).padStart(
+                                    2,
+                                    '0',
+                                  )}
+                                </span>
+                              </li>
+                            ),
+                          )}
                         </ul>
                       </div>
                     )}
@@ -602,7 +607,9 @@ export function SolutionsPage() {
                       className="h-px bg-brass"
                       animate={{
                         width: `${
-                          ((activeIndex + 1) / services.length) * 100
+                          ((activeIndex + 1) /
+                            services.length) *
+                          100
                         }%`,
                       }}
                       transition={{
@@ -621,7 +628,12 @@ export function SolutionsPage() {
                         onMouseEnter={() => setActiveIndex(index)}
                         onFocus={() => setActiveIndex(index)}
                         onClick={() => setActiveIndex(index)}
-                        className="group flex justify-center py-2"
+                        className="
+                          group
+                          flex
+                          justify-center
+                          py-2
+                        "
                       >
                         <span
                           className={`
@@ -651,3 +663,4 @@ export function SolutionsPage() {
     </>
   );
 }
+

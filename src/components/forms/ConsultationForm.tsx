@@ -56,24 +56,21 @@ export function ConsultationForm() {
 
     setStatus("submitting");
     try {
-      const endpoint = import.meta.env.VITE_CONTACT_FORM_ENDPOINT as string | undefined;
-      if (!endpoint) {
-        console.warn("VITE_CONTACT_FORM_ENDPOINT is not set.");
-        setStatus("error");
-        return;
-      }
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          Object.fromEntries(
-            Object.entries(values)
-              .filter(([k]) => k !== HONEYPOT_FIELD)
-              .map(([k, v]) => [k, sanitizeInput(String(v ?? ""))])
-          )
-        ),
-      });
-      if (!res.ok) throw new Error("submit_failed");
+     const res = await fetch("/api/contact", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: sanitizeInput(values.name),
+    company: sanitizeInput(values.company),
+    phone: sanitizeInput(values.phone),
+    email: sanitizeInput(values.email),
+    activityType: sanitizeInput(values.activityType),
+    serviceNeeded: sanitizeInput(values.serviceNeeded),
+    description: sanitizeInput(values.description),
+  }),
+});      if (!res.ok) throw new Error("submit_failed");
       setStatus("success");
       setValues(initialState);
     } catch {

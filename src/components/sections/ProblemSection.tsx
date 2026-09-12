@@ -6,7 +6,12 @@ import {
   useMotionValueEvent,
   useScroll,
 } from 'framer-motion';
-import { useRef, useState } from 'react';
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from 'react';
 
 import { problemContent } from '@/data/content';
 import { Container } from '@/components/ui/Container';
@@ -16,6 +21,9 @@ export function ProblemSection() {
   const reducedMotion = useReducedMotion();
 
   const sectionRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const scanLineRef = useRef<HTMLDivElement>(null);
+  const scanLineVerticalRef = useRef<HTMLDivElement>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -24,6 +32,15 @@ export function ProblemSection() {
     offset: ['start start', 'end end'],
   });
 
+  /*
+   * Direct scroll → grid movement.
+   *
+   * No spring.
+   * No lerp.
+   * No animation delay.
+   *
+   * This keeps the grid synchronized with the user's scroll position.
+   */
   useMotionValueEvent(scrollYProgress, 'change', (latest) => {
     const total = problemContent.points.length;
 
@@ -35,7 +52,77 @@ export function ProblemSection() {
     setActiveIndex((current) =>
       current === index ? current : index,
     );
+
+    if (reducedMotion) {
+      return;
+    }
+
+    const progress = Math.max(0, Math.min(1, latest));
+
+    const translateX = progress * -220;
+    const translateY = progress * -420;
+    const rotate = progress * 2;
+
+    if (gridRef.current) {
+      gridRef.current.style.transform =
+        `translate3d(${translateX}px, ${translateY}px, 0) rotate(${rotate}deg)`;
+    }
+
+    if (scanLineRef.current) {
+      scanLineRef.current.style.transform =
+        `translate3d(0, ${progress * 100}vh, 0)`;
+    }
+
+    if (scanLineVerticalRef.current) {
+      scanLineVerticalRef.current.style.transform =
+        `translate3d(${progress * 100}vw, 0, 0)`;
+    }
   });
+
+  /*
+   * Pointer interaction.
+   *
+   * CSS variables are written directly to the DOM to avoid React
+   * re-renders on every pointer movement.
+   */
+  const handlePointerMove = (
+    event: PointerEvent<HTMLElement>,
+  ) => {
+    if (reducedMotion || !sectionRef.current) {
+      return;
+    }
+
+    const rect = sectionRef.current.getBoundingClientRect();
+
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+    sectionRef.current.style.setProperty(
+      '--pointer-x',
+      `${Math.max(0, Math.min(100, x))}%`,
+    );
+
+    sectionRef.current.style.setProperty(
+      '--pointer-y',
+      `${Math.max(0, Math.min(100, y))}%`,
+    );
+  };
+
+  const handlePointerLeave = () => {
+    if (!sectionRef.current) {
+      return;
+    }
+
+    sectionRef.current.style.setProperty(
+      '--pointer-x',
+      '50%',
+    );
+
+    sectionRef.current.style.setProperty(
+      '--pointer-y',
+      '50%',
+    );
+  };
 
   const currentPoint = problemContent.points[activeIndex];
 
@@ -46,14 +133,246 @@ export function ProblemSection() {
     <section
       ref={sectionRef}
       dir="rtl"
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      style={
+        {
+          '--pointer-x': '50%',
+          '--pointer-y': '50%',
+        } as CSSProperties
+      }
       className="
         relative
         z-20
         isolate
         h-[300vh]
+        overflow-hidden
         bg-base
       "
     >
+      {/* =========================================================
+          TECHNICAL BACKGROUND SYSTEM
+          ========================================================= */}
+
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          z-0
+          overflow-hidden
+        "
+      >
+        {/* Main moving grid */}
+        <div
+          ref={gridRef}
+          className="
+            absolute
+            -inset-[25%]
+            will-change-transform
+          "
+          style={{
+            backgroundImage: `
+              linear-gradient(
+                to right,
+                rgba(200, 155, 92, 0.24) 1px,
+                transparent 1px
+              ),
+              linear-gradient(
+                to bottom,
+                rgba(200, 155, 92, 0.24) 1px,
+                transparent 1px
+              ),
+              linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0.07) 1px,
+                transparent 1px
+              ),
+              linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.07) 1px,
+                transparent 1px
+              )
+            `,
+            backgroundSize:
+              '64px 64px, 64px 64px, 16px 16px, 16px 16px',
+            transform:
+              'translate3d(0, 0, 0) rotate(0deg)',
+          }}
+        />
+
+        {/* Pointer-reactive light */}
+        <div
+          className="
+            absolute
+            inset-0
+            transition-opacity
+            duration-500
+          "
+          style={{
+            background: `
+              radial-gradient(
+                420px circle at var(--pointer-x) var(--pointer-y),
+                rgba(200, 155, 92, 0.16),
+                rgba(200, 155, 92, 0.06) 30%,
+                transparent 68%
+              )
+            `,
+          }}
+        />
+
+        {/* Secondary pointer glow */}
+        <div
+          className="
+            absolute
+            inset-0
+          "
+          style={{
+            background: `
+              radial-gradient(
+                900px circle at var(--pointer-x) var(--pointer-y),
+                rgba(255, 255, 255, 0.035),
+                transparent 55%
+              )
+            `,
+          }}
+        />
+
+        {/* Horizontal scan line */}
+        <div
+          ref={scanLineRef}
+          className="
+            absolute
+            left-0
+            top-[-100vh]
+            h-px
+            w-full
+            bg-gradient-to-r
+            from-transparent
+            via-brass/50
+            to-transparent
+            opacity-60
+            will-change-transform
+          "
+        />
+
+        {/* Vertical scan line */}
+        <div
+          ref={scanLineVerticalRef}
+          className="
+            absolute
+            left-[-100vw]
+            top-0
+            h-full
+            w-px
+            bg-gradient-to-b
+            from-transparent
+            via-brass/40
+            to-transparent
+            opacity-50
+            will-change-transform
+          "
+        />
+
+        {/* Technical center axis */}
+        <div
+          className="
+            absolute
+            left-1/2
+            top-0
+            h-full
+            w-px
+            -translate-x-1/2
+            bg-brass/[0.08]
+          "
+        />
+
+        {/* Technical horizontal axis */}
+        <div
+          className="
+            absolute
+            left-0
+            top-1/2
+            h-px
+            w-full
+            -translate-y-1/2
+            bg-brass/[0.08]
+          "
+        />
+
+        {/* Center technical node */}
+        <div
+          className="
+            absolute
+            left-1/2
+            top-1/2
+            h-3
+            w-3
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+            border
+            border-brass/50
+            bg-base
+            shadow-[0_0_30px_rgba(200,155,92,0.25)]
+          "
+        />
+
+        <div
+          className="
+            absolute
+            left-1/2
+            top-1/2
+            h-12
+            w-12
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+            border
+            border-brass/[0.15]
+          "
+        />
+
+        {/* Edge fade */}
+        <div
+          className="
+            absolute
+            inset-0
+            bg-[radial-gradient(circle_at_center,transparent_20%,#050505_88%)]
+          "
+        />
+
+        {/* Top/bottom cinematic fade */}
+        <div
+          className="
+            absolute
+            inset-x-0
+            top-0
+            h-40
+            bg-gradient-to-b
+            from-base
+            to-transparent
+          "
+        />
+
+        <div
+          className="
+            absolute
+            inset-x-0
+            bottom-0
+            h-40
+            bg-gradient-to-t
+            from-base
+            to-transparent
+          "
+        />
+      </div>
+
+      {/* =========================================================
+          STICKY CONTENT
+          ========================================================= */}
+
       <div
         className="
           sticky
@@ -70,21 +389,21 @@ export function ProblemSection() {
         "
       >
         <Container
-         className="
-  relative
-  z-30
-  flex
-  w-full
-  max-w-4xl
-  translate-y-8
-  flex-col
-  items-center
-  justify-center
-  text-center
-  sm:translate-y-10
-  lg:translate-y-12
-"
-          >
+          className="
+            relative
+            z-30
+            flex
+            w-full
+            max-w-4xl
+            translate-y-8
+            flex-col
+            items-center
+            justify-center
+            text-center
+            sm:translate-y-10
+            lg:translate-y-12
+          "
+        >
           {/* Background atmosphere */}
           <div
             aria-hidden="true"
@@ -107,7 +426,7 @@ export function ProblemSection() {
             "
           />
 
-          {/* Main content */}
+          {/* Content */}
           <div
             className="
               relative
@@ -392,3 +711,4 @@ export function ProblemSection() {
     </section>
   );
 }
+

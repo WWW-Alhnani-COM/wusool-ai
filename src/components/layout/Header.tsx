@@ -111,46 +111,47 @@ export function Header() {
               BRAND
               ================================================== */}
 
-          <NavLink
-            to="/"
-            onClick={closeMenu}
-            className="
-              shrink-0
-              text-ink
-              transition-opacity
-              duration-300
-              hover:opacity-80
-            "
-            aria-label="جِذع AI"
-          >
-            <span
-              className="
-                font-display
-                text-xl
-                font-bold
-                tracking-tight
-                sm:text-2xl
-              "
-            >
-              جِذع
-            </span>
+         <NavLink
+  to="/"
+  onClick={closeMenu}
+  className="
+    flex
+    shrink-0
+    items-center
+    gap-2.5
+    text-ink
+    transition-opacity
+    duration-300
+    hover:opacity-80
+  "
+  aria-label="جِذع AI"
+>
+  <img
+    src="/favicon.svg"
+    alt="جِذع AI"
+    aria-hidden="true"
+    className="
+      h-8
+      w-8
+      shrink-0
+      rounded-lg
+      object-contain
+      sm:h-9
+      sm:w-9
+    "
+  />
 
-            <span
-              className="
-                ml-1
-                font-english
-                text-sm
-                font-semibold
-                tracking-[0.08em]
-                text-brass
-                sm:text-base
-              "
-              dir="ltr"
-            >
-              AI
-            </span>
-          </NavLink>
+  <span className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+    جِذع
+  </span>
 
+  <span
+    className="-ml-1.5 font-english text-sm font-semibold tracking-[0.08em] text-brass sm:text-base"
+    dir="ltr"
+  >
+    AI
+  </span>
+</NavLink>
           {/* ==================================================
               DESKTOP NAV
               ================================================== */}

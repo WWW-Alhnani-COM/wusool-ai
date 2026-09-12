@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -384,6 +383,17 @@ export function ProblemSection() {
                 المشكلة أنها لا تعمل معًا.
               </p>
             </motion.div>
+
+            {/* Spacing after the final element */}
+            <div
+              aria-hidden="true"
+              className="
+                h-10
+                w-full
+                sm:h-12
+                lg:h-16
+              "
+            />
           </div>
         </Container>
       </div>

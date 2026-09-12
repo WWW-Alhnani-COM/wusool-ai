@@ -314,12 +314,12 @@ export function SolutionsPage() {
 
                         {/* Description */}
                         <p className="mt-6 max-w-2xl text-sm leading-8 text-ink-muted md:text-base">
-                          {activeService.description}
+                          {activeService.summary}
                         </p>
 
                         {/* Details */}
-                        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-                          {activeService.features?.map((feature, index) => (
+                       <div className="mt-10 grid gap-4 sm:grid-cols-2">
+                      {activeService.points.map((feature, index) => (
                             <div
                               key={`${activeService.slug}-${index}`}
                               className="border border-line bg-white/[0.015] p-4"

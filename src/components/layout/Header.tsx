@@ -89,15 +89,15 @@ export function Header() {
             ${
               scrolled
                 ? `
-                  border-ink/10
-                  bg-white/90
-                  shadow-[0_18px_60px_rgba(23,23,23,0.08)]
+                  border-white/10
+                  bg-black/75
+                  shadow-[0_18px_60px_rgba(0,0,0,0.35)]
                   backdrop-blur-2xl
                 `
                 : `
-                  border-ink/10
-                  bg-white/70
-                  shadow-[0_10px_40px_rgba(23,23,23,0.04)]
+                  border-white/10
+                  bg-black/45
+                  shadow-[0_10px_40px_rgba(0,0,0,0.25)]
                   backdrop-blur-xl
                 `
             }
@@ -243,12 +243,12 @@ export function Header() {
               lg:hidden
               rounded-xl
               border
-              border-ink/10
-              bg-ink/[0.03]
+              border-white/10
+              bg-white/[0.04]
               p-2.5
               text-ink
               transition
-              hover:bg-ink/[0.06]
+              hover:bg-white/[0.07]
             "
             aria-label={
               open
@@ -345,10 +345,10 @@ export function Header() {
             className="
               rounded-[20px]
               border
-              border-ink/10
-              bg-white/95
+              border-white/10
+              bg-black/90
               p-3
-              shadow-[0_18px_60px_rgba(23,23,23,0.10)]
+              shadow-[0_18px_60px_rgba(0,0,0,0.45)]
               backdrop-blur-2xl
             "
             aria-label="القائمة"
@@ -374,8 +374,8 @@ export function Header() {
                       duration-300
                       ${
                         isActive
-                          ? "bg-ink/[0.04] text-brass"
-                          : "text-ink/75 hover:bg-ink/[0.03] hover:text-ink"
+                          ? "bg-white/[0.06] text-brass"
+                          : "text-ink/75 hover:bg-white/[0.04] hover:text-ink"
                       }
                     `
                   }
@@ -389,7 +389,7 @@ export function Header() {
               className="
                 mt-2
                 border-t
-                border-ink/10
+                border-white/10
                 pt-3
               "
             >

@@ -69,22 +69,22 @@ export function ProblemSection() {
           lg:h-[calc(100vh-7rem)]
         "
       >
- <Container
-  className="
-    relative
-    flex
-    h-full
-    w-full
-    items-center
-    justify-center
-    px-5
-    py-16
-    sm:px-8
-    sm:py-20
-    lg:px-10
-    lg:py-24
-  "
->
+        <Container
+          className="
+            relative
+            flex
+            h-full
+            w-full
+            items-center
+            justify-center
+            px-5
+            py-16
+            sm:px-8
+            sm:py-20
+            lg:px-10
+            lg:py-24
+          "
+        >
           {/* Background atmosphere */}
           <div
             aria-hidden="true"
@@ -93,17 +93,17 @@ export function ProblemSection() {
               absolute
               left-1/2
               top-1/2
-              h-[280px]
-              w-[280px]
+              h-[240px]
+              w-[240px]
               -translate-x-1/2
               -translate-y-1/2
               rounded-full
               bg-brass/5
-              blur-[100px]
-              sm:h-[400px]
-              sm:w-[400px]
-              lg:h-[500px]
-              lg:w-[500px]
+              blur-[90px]
+              sm:h-[340px]
+              sm:w-[340px]
+              lg:h-[420px]
+              lg:w-[420px]
             "
           />
 
@@ -114,7 +114,7 @@ export function ProblemSection() {
               z-30
               flex
               w-full
-              max-w-5xl
+              max-w-4xl
               flex-col
               items-center
               justify-center
@@ -147,25 +147,25 @@ export function ProblemSection() {
                 ease: [0.22, 1, 0.36, 1],
               }}
               className="
-                mb-6
+                mb-5
                 w-full
-                max-w-4xl
+                max-w-3xl
                 px-4
-                sm:mb-8
-                lg:mb-10
+                sm:mb-7
+                lg:mb-8
               "
             >
               <span
                 className="
                   mb-3
                   block
-                  text-xs
+                  text-[10px]
                   font-medium
                   uppercase
                   tracking-[0.25em]
                   text-brass
                   sm:mb-4
-                  sm:text-sm
+                  sm:text-xs
                 "
               >
                 المشكلة
@@ -174,14 +174,14 @@ export function ProblemSection() {
               <h2
                 className="
                   font-display
-                  text-3xl
+                  text-2xl
                   font-bold
                   leading-[1.15]
                   tracking-tight
                   text-ink
-                  sm:text-4xl
-                  md:text-5xl
-                  lg:text-6xl
+                  sm:text-3xl
+                  md:text-4xl
+                  lg:text-5xl
                 "
               >
                 {problemContent.heading}
@@ -193,15 +193,15 @@ export function ProblemSection() {
               className="
                 relative
                 flex
-                min-h-[130px]
+                min-h-[100px]
                 w-full
                 items-center
                 justify-center
                 px-5
-                sm:min-h-[160px]
+                sm:min-h-[120px]
                 sm:px-8
-                md:min-h-[190px]
-                lg:min-h-[220px]
+                md:min-h-[145px]
+                lg:min-h-[170px]
               "
             >
               <AnimatePresence
@@ -257,13 +257,13 @@ export function ProblemSection() {
                   <span
                     className="
                       mb-3
-                      text-xs
+                      text-[10px]
                       font-medium
                       uppercase
                       tracking-[0.22em]
                       text-brass/80
                       sm:mb-4
-                      sm:text-sm
+                      sm:text-xs
                     "
                   >
                     {String(activeIndex + 1).padStart(2, '0')}
@@ -271,17 +271,17 @@ export function ProblemSection() {
 
                   <p
                     className="
-                      max-w-3xl
+                      max-w-2xl
                       px-2
                       font-display
-                      text-2xl
+                      text-xl
                       font-semibold
                       leading-[1.35]
                       text-ink
-                      sm:text-3xl
-                      md:text-4xl
-                      lg:text-5xl
-                      xl:text-6xl
+                      sm:text-2xl
+                      md:text-3xl
+                      lg:text-4xl
+                      xl:text-5xl
                     "
                   >
                     {currentPoint}
@@ -293,12 +293,13 @@ export function ProblemSection() {
             {/* Progress */}
             <div
               className="
-                mt-5
+                mt-7
                 flex
                 items-center
                 justify-center
                 gap-2
-                sm:mt-6
+                sm:mt-9
+                lg:mt-10
               "
               aria-hidden="true"
             >
@@ -315,7 +316,7 @@ export function ProblemSection() {
                       duration-300
                       ${
                         isActive
-                          ? 'w-8 bg-brass'
+                          ? 'w-7 bg-brass'
                           : 'w-1.5 bg-ink/15'
                       }
                     `}
@@ -337,22 +338,23 @@ export function ProblemSection() {
               }}
               className="
                 pointer-events-none
-                mt-6
-                max-w-3xl
+                mt-8
+                max-w-2xl
                 text-center
-                sm:mt-8
+                sm:mt-10
+                lg:mt-12
               "
               aria-hidden={!isLastPoint}
             >
               <p
                 className="
                   font-display
-                  text-xl
+                  text-lg
                   font-semibold
                   leading-relaxed
                   text-ink
-                  sm:text-2xl
-                  lg:text-3xl
+                  sm:text-xl
+                  lg:text-2xl
                 "
               >
                 المشكلة ليست في كثرة الأنظمة.
@@ -362,21 +364,31 @@ export function ProblemSection() {
                 className="
                   mt-2
                   font-display
-                  text-xl
+                  text-lg
                   font-bold
                   leading-relaxed
                   text-brass
-                  sm:text-2xl
-                  lg:text-3xl
+                  sm:text-xl
+                  lg:text-2xl
                 "
               >
                 المشكلة أنها لا تعمل معًا.
               </p>
             </motion.div>
+
+            {/* Bottom spacing */}
+            <div
+              aria-hidden="true"
+              className="
+                h-8
+                w-full
+                sm:h-12
+                lg:h-16
+              "
+            />
           </div>
         </Container>
       </div>
     </section>
   );
 }
-
